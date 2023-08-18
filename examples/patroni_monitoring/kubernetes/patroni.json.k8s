@@ -1,0 +1,11 @@
+{
+    "Cluster"          : "", 
+    "Remote_host"      : "",
+    "Remote_user"      : "",
+    "Use_sudo"         : "",
+    "Ssh_private_key"  : "",
+    "Replication_info" : "nogucs",
+    "Watch_timer"      : 5,
+    "Format"           : "list",
+    "K8s_selector"     : "postgres-operator.crunchydata.com/cluster=hippo,postgres-operator.crunchydata.com/role=master"
+}

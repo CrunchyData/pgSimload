@@ -1,0 +1,11 @@
+{
+  "sessionparameters": [
+    {
+      "parameter" : "synchronous_commit"
+     ,"value"     : "remote_apply"
+    },
+    { "parameter" : "work_mem"
+     ,"value"     : "12MB"
+    }
+  ]
+}

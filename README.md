@@ -16,7 +16,7 @@ pgSimload is a tool written in Go, and accepts 2 different modes of execution:
 
 Given the mode you choose, some parameters are mandatory or not. And the
 contexts of executions are different. Please refer to the complete
-documentation in [docs/pgSimload.doc.md](https://github.com/CrunchyData/pgSimload/blob/main/doc/pgSimload.doc.md)
+documentation in [docs/pgSimload.doc.md](doc/pgSimload.doc.md)
 
 # Running, Building and Installing binary
 
@@ -136,9 +136,9 @@ This tool can be used in different scenarios:
     a fully Open Source based PostgreSQL distribution to run production workloads in Kubernetes
 
 For a complete documentation, please have a look at
-[docs/pgSimload.doc.md](https://github.com/CrunchyData/pgSimload/blob/main/doc/pgSimload.doc.md)
+[docs/pgSimload.doc.md](doc/pgSimload.doc.md)
 online or alternativately download the [PDF
-Version](https://github.com/CrunchyData/pgSimload/blob/main/doc/pgSimload.doc.pdf)
+Version](doc/pgSimload.doc.pdf)
 of the documentation for offline read of 20 pages.
 
 This documentation contains **examples** explanation, and full, comprehensive

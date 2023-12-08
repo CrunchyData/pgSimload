@@ -20,9 +20,6 @@ documentation in [docs/pgSimload.doc.md](https://github.com/CrunchyData/pgSimloa
 
 # Release notes
 
-After 4 months of intensive tests, pgSimload v.1.0.0 is out after the beta
-perdiod!
-
 ## Version 1.0.0 (December, 8th 2023)
 
 After 3 months of intensive tests, pgSimload v.1.0.0 is out after the beta

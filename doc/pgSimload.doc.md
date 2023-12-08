@@ -4,7 +4,7 @@ Welcome to pgSimload !
 
 The actual version of the program is:
 
-**pgSimload version 1.0.0-beta - July, 24th 2023**
+**pgSimload version 1.0.0 - December, 8th 2023**
 
 pgSimload is a tool written in Go, and accepts 2 different modes of execution:
 
@@ -17,6 +17,26 @@ pgSimload is a tool written in Go, and accepts 2 different modes of execution:
 Given the mode you choose, some parameters are mandatory or not. And the
 contexts of executions are different. Please refer to the complete
 documentation in [docs/pgSimload.doc.md](https://github.com/CrunchyData/pgSimload/blob/main/doc/pgSimload.doc.md)
+
+# Release notes
+
+After 4 months of intensive tests, pgSimload v.1.0.0 is out after the beta
+perdiod!
+
+## Version 1.0.0 (December, 8th 2023)
+
+After 3 months of intensive tests, pgSimload v.1.0.0 is out after the beta
+period!
+
+What's new?
+ - updated Go modules
+ - rebuild of binaries
+ - tagging version 1.0.0
+ - minor fixes in documentation (links)
+
+## Version 1.0.0-beta (July, 24th 2023)
+
+First released version of pgSimload !
 
 # Running, Building and Installing binary
 

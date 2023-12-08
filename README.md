@@ -33,11 +33,11 @@ $ go run main.go -h
 ## Using binaries provided
 
 If you don't have Go installed on your system, you can also just use one of
-the binaries provided in [bin/](https://github.com/CrunchyData/pgSimload/blob/main/bin/)
+the binaries provided in [bin/](https://github.com/CrunchyData/pgSimload/blob/master/main/bin/)
 . If you want to build your own binary you can
 build it too, as described in the next paragraph.
 
-Please read carefully [bin/README.md](https://github.com/CrunchyData/pgSimload/blob/main/bin/README.md),
+Please read carefully [bin/README.md](https://github.com/CrunchyData/pgSimload/blob/master/main/bin/README.md),
 where we told you wich binary to use depending on your environment, specially
 in Linux.
 
@@ -47,7 +47,7 @@ Feedback is welcome in any cases!
 
 ## Building binaries
 
-You can use the provided script [build.sh](https://github.com/CrunchyData/pgSimload/blob/main/build.sh):
+You can use the provided script [build.sh](https://github.com/CrunchyData/pgSimload/blob/master/main/build.sh):
 
 ```code 
 $ sh build.sh
@@ -138,7 +138,7 @@ This tool can be used in different scenarios:
 For a complete documentation, please have a look at
 [docs/pgSimload.doc.md](doc/pgSimload.doc.md)
 online or alternativately download the [PDF
-Version](doc/pgSimload.doc.pdf)
+Version](https://github.com/CrunchyData/pgSimload/blob/master/doc/pgSimload.doc.pdf)
 of the documentation for offline read of 20 pages.
 
 This documentation contains **examples** explanation, and full, comprehensive

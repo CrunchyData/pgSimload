@@ -122,7 +122,7 @@ ORDER BY 1;
 }
 `)
 
-  Version = "pgSimLoad v.1.0.0-beta - July 24th 2023"
+  Version = "pgSimLoad v.1.0.0 - December 8th 2023"
 
   License = heredoc.Doc(`
 **The PostgreSQL License**

@@ -2,6 +2,7 @@
     "Cluster"          : "", 
     "Remote_host"      : "",
     "Remote_user"      : "",
+    "Remote_port"      : 22,
     "Use_sudo"         : "",
     "Ssh_private_key"  : "",
     "Replication_info" : "nogucs",

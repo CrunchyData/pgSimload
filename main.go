@@ -15,8 +15,6 @@ import (
   "encoding/json"
   "github.com/MakeNowJust/heredoc"
   "golang.org/x/crypto/ssh"
-  "bytes"
-  "net"
   "github.com/inancgumus/screen"
   "regexp"
   "errors"
@@ -67,7 +65,7 @@ var (
   patroniconfigfilename     stringFlag
   patronictlout             string = ""
   pod                       string = ""
-  
+
   replication_info_query = heredoc.Doc(`
 select                            
     3
@@ -122,7 +120,7 @@ ORDER BY 1;
 }
 `)
 
-  Version = "pgSimLoad v.1.0.0 - December 8th 2023"
+  Version = "pgSimLoad v.1.0.1 - January 8th 2023"
 
   License = heredoc.Doc(`
 **The PostgreSQL License**
@@ -169,6 +167,7 @@ type PatroniConfig struct {
     Cluster          string 
     Remote_host      string
     Remote_user      string
+    Remote_port      int
     Use_sudo         string
     Ssh_private_key  string
     Replication_info string
@@ -193,6 +192,20 @@ type SessionParameters struct {
 type SessionParameter struct {
      Parameter  string
      Value      string
+}
+
+// SSHClientConfig structure 
+// Values comes from the `patroni.json` file
+type SSHClientConfig struct {
+	Host        string
+	Port        int
+	User        string
+	PrivateKey  string
+}
+
+type SSHManager struct {
+  Config      SSHClientConfig
+	Client      *ssh.Client
 }
 
 type stringFlag struct {
@@ -331,81 +344,110 @@ func gatherGucs () {
 }
 
 
-// Function to do a remote run of a command thru an ssh connection
-func remoteRun(user string, addr string, privateKey string, cmd string) (string, error) {
-
-
-    // privateKey could be read from a file, or retrieved from another storage
-    // source, such as the Secret Service / GNOME Keyring
-    file_privateKey, err := os.ReadFile(privateKey)
-	  if err != nil {
-      message := "Could not read SSH private key file defined in " 
-      message = message + patroniconfigfilename.value +  ":\n"
-      exit1(message,err)
-	  }
-  
-    key, err := ssh.ParsePrivateKey([]byte(file_privateKey))
-    if err != nil {
-      message := "Could not use SSH private key file defined in "
-      message = message + patroniconfigfilename.value
-      message = message + "\nYou may have entered the public key instead the private one ?\n"
-      exit1(message,err)
-    }
-
-    // Authentication
-    config := &ssh.ClientConfig{
-        User: user,
-        // https://github.com/golang/go/issues/19767 
-        // as clientConfig is non-permissive by default 
-        // you can set ssh.InsercureIgnoreHostKey to allow any host 
-        HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-        Auth: []ssh.AuthMethod{
-            ssh.PublicKeys(key),
-        },
-        //alternatively, you could use a password
-        /*
-            Auth: []ssh.AuthMethod{
-                ssh.Password("PASSWORD"),
-            },
-        */
-    }
-    // Connect
-    client, err := ssh.Dial("tcp", net.JoinHostPort(addr, "22"), config)
-    if err != nil {
-        return "", err
-    }
-    // Create a session. It is one session per command.
-    session, err := client.NewSession()
-    if err != nil {
-        return "", err
-    }
-
-    //last-in-first-out order
-    //DEFERing the 
-    //...close the ssh.Dial but
-    defer client.Close()
-    //...before, close the client.NewSession
-    defer session.Close()
-
-    var b bytes.Buffer  // import "bytes"
-    session.Stdout = &b // get output
-    // you can also pass what gets input to the stdin, allowing you to pipe
-    // content from client to server
-    //      session.Stdin = bytes.NewBufferString("My input")
-
-    // Finally, run the command
-    err = session.Run(cmd)
-    return b.String(), err
- 
+// NewSSHManager to spawn a new SSHManager with the given configuration.
+func NewSSHManager(config SSHClientConfig) *SSHManager {
+	return &SSHManager{Config: config}
 }
 
+// EnsureConnected ensures that the SSH client is connected
+// if not (m.Client == nil) -> reconnects  
+func (m *SSHManager) EnsureConnected() error {
+	if m.Client == nil {
+		client, err := m.connectSSH()
+		if err != nil {
+			return err
+		}
+		m.Client = client
+	}
+	return nil
+}
+
+// connectSSH creates a new SSH client and returns its pointer
+func (m *SSHManager) connectSSH() (*ssh.Client, error) {
+
+  // privateKey could be read from a file, or retrieved from another storage
+  // source, such as the Secret Service / GNOME Keyring
+  file_privateKey, err := os.ReadFile(m.Config.PrivateKey)
+  if err != nil {
+    message := "\nCould not read SSH private key file defined in " 
+    message = message + patroniconfigfilename.value +  ":\n"
+    exit1(message, err)
+  }
+
+  key, err := ssh.ParsePrivateKey([]byte(file_privateKey))
+  if err != nil {
+    message := "\nCould not use SSH private key file defined in "
+    message = message + patroniconfigfilename.value
+    message = message + "\nYou may have entered the public key instead the private one ?\n"
+    exit1(message, err)
+  }
+
+	// Create the SSH client config
+	sshConfig := &ssh.ClientConfig{
+		User: m.Config.User,
+    // https://github.com/golang/go/issues/19767 
+    // as clientConfig is non-permissive by default 
+    // you can set ssh.InsercureIgnoreHostKey to allow any host 
+    HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+    Auth: []ssh.AuthMethod{
+      ssh.PublicKeys(key),
+    },
+		Timeout:         5 * time.Second,
+	}
+
+  //JPAREM : maybe do a 1.0.2 to support both private key _and_ password
+  //methods?
+  //alternative with password 
+  /*
+  Auth: []ssh.AuthMethod{
+      ssh.Password("PASSWORD"),
+  */
+   
+	// Connect to the SSH server
+	client, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", m.Config.Host, m.Config.Port), sshConfig)
+	if err != nil {
+    message := "\nFailed to connect to SSH server: \n"
+		return nil, fmt.Errorf(message+"%v", err)
+	}
+
+	return client, nil
+}
+
+// RunCommand to run the specified command in parameter
+// to the current SSH client opened remotely
+func (m *SSHManager) RunCommand(command string) (string, error) {
+	// Ensure the SSH client is connected
+	if err := m.EnsureConnected(); err != nil {
+		return "", err
+	}
+
+	// Create a session
+	session, err := m.Client.NewSession()
+	if err != nil {
+    //return "", fmt.Errorf("Failed to create SSH session: %v", err)
+    message := "Failed to create SSH session: \n"
+		return "", fmt.Errorf(message+"%v", err)
+	}
+	defer session.Close()
+
+	// Run the command
+	output, err := session.CombinedOutput(command)
+	if err != nil {
+		message := "Failed to run command: \n"
+		return "", fmt.Errorf(message+"%v", err)
+	}
+
+	return string(output), nil
+}
+
+
 func init() {
-    flag.Var(&configfilename,        "config",       "JSON config filename")
-    flag.Var(&createfilename,        "create",       "JSON create filename")
-    flag.Var(&scriptfilename,        "script",       "SQL script filename")
-    flag.Var(&sessiongucsfilename,   "session_parameters", "JSON session gucs filename")
-    flag.Var(&patroniconfigfilename, "patroni",      "JSON Patroni watcher mode config filename")
-    flag.Var(&gathergucsfilename   , "create_gucs_template", "outputs to that JSON filename")
+  flag.Var(&configfilename,        "config",       "JSON config filename")
+  flag.Var(&createfilename,        "create",       "JSON create filename")
+  flag.Var(&scriptfilename,        "script",       "SQL script filename")
+  flag.Var(&sessiongucsfilename,   "session_parameters", "JSON session gucs filename")
+  flag.Var(&patroniconfigfilename, "patroni",      "JSON Patroni watcher mode config filename")
+  flag.Var(&gathergucsfilename   , "create_gucs_template", "outputs to that JSON filename")
 }
 
 //function to check flags passed with --flag value
@@ -715,24 +757,34 @@ func PatroniWatch() {
     remote_command = "patronictl -c /etc/patroni/" + patroni_config.Cluster + ".yml " + patroni_config.Format+ " " + patroni_config.Cluster
   }
 
-  // We're looping on an ssh remote command where a Patroni of the cluster is
-  // running
-  // User can break the loop entering the <ESC> key
-  // We're looping with a delay of "--watch_timer x " seconds
-  // created by a "sleep" command of a computed value
 	stopCh := make(chan bool)
 	go func() {
 		for {
 			_, key, err := keyboard.GetKey()
-			if err != nil {
+      if err != nil {
         //exit1("Error:\n",err)
 			}
 			if key == keyboard.KeyEsc {
 				stopCh <- true
 			}
-		}
-	}()
-	
+     }
+		}()
+
+  sshConfig := SSHClientConfig{
+    Host:       patroni_config.Remote_host,
+    Port:       patroni_config.Remote_port,
+    User:       patroni_config.Remote_user,
+    PrivateKey: patroni_config.Ssh_private_key,
+  }
+
+  // Create SSH manager
+  sshManager := NewSSHManager(sshConfig)
+  defer func() {
+    if sshManager.Client != nil {
+      sshManager.Client.Close()
+    }
+  }()
+
   loop:
 	  for {
 		  select {
@@ -745,18 +797,32 @@ func PatroniWatch() {
         err_start_sec = time.Now().Unix()
 
         if patroni_config.K8s_selector == "" {
-          //execution on bare metal or VMs : ssh the machine and run
-          //patronictl there
-          output, err := remoteRun(patroni_config.Remote_user, patroni_config.Remote_host, patroni_config.Ssh_private_key, remote_command)
 
-          if err != nil {
-            message := "Error while running the remote command :\n  " + remote_command + "\n  executed as " + patroni_config.Remote_user 
-            message = message + "\n  on host" + patroni_config.Remote_host + "\n  using SSH private_key " 
-            message = message + patroni_config.Ssh_private_key + ":\n  error returned was :\n"
-            exit1(message,err)
-          }
+          //execution on SSH boxes
 
-          patronictlout = string(output)
+          output, err := sshManager.RunCommand(remote_command)
+      		if err != nil {
+             fmt.Print(string(colorRed))
+             fmt.Printf("Error executing command remote command \"ssh %v@%v:%v\" :\n  %v", sshConfig.User, sshConfig.Host, sshConfig.Port, remote_command)
+             fmt.Print(string(colorReset))
+	
+			       // If the SSH client is closed, reopen it
+			       if sshManager.Client == nil {
+               fmt.Print(string(colorRed))
+               fmt.Printf("\nTrying to reopen an SSH client...\n")
+               fmt.Print(string(colorReset))
+
+				       if err := sshManager.EnsureConnected(); err != nil {
+                 message := "Error reopening SSH client:\n"
+                 message = message + "Maybe worth verifying your "+patroniconfigfilename.value + " file ?"
+                 exit1(message, err)
+				       }
+			       }
+		      } else {
+			      //fmt.Printf("Command '%s' output:\n%s\n", remote_cmd, output)
+            patronictlout = string(output)
+		      }
+
 
         } else {
           //execution on Kubernetes env
@@ -888,10 +954,11 @@ func PatroniWatch() {
             }
           }
           exit1("Watch_timer in "+patroniconfigfilename.value+" is not >1 so we ran only once",nil)
-        }
-     }
-  }
-}
+
+      } //else: Watch_timer is something inferior to 1 : we run once on
+    } // if patroni_config.Watch_timer > 1
+  }  //if patroni_config.K8s_selector == "" 
+} // func PatroniWatch()
 
 
 func ExecCreate() {

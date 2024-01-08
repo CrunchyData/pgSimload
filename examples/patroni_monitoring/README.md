@@ -23,6 +23,7 @@ This could be something like:
 {
     "Cluster"          : "Patroni_cluster_name", 
     "Remote_host"      : "Primary_hostname_or_IP",
+    "Remote_port"      : 22,
     "Remote_user"      : "username_on_the_remote_host",
     "Use_sudo"         : "yes",
     "Ssh_private_key"  : "/home/your_username_here/.ssh/id_patroni",
@@ -35,8 +36,14 @@ This could be something like:
 
 `Cluster` is the name of the Patroni cluster itself you want to monitor.
 
+`Remote_host` and `Remote_port` are used to connect the `Remote_user` via SSH.
+If you use some different port for `sshd` on the `Remote_host`, then please
+change the port from 22 to that port.
+
 If the `Remote_user` set has to use `sudo` command to run `patronictl` then,
-please set `Use_sudo` to `yes`, ortherwise, to `no`.
+please set `Use_sudo` to `yes`, ortherwise, to `no`. If `sudo` is not used,
+then it's assumed that `Remote_user` has access and rights to use
+`patronictl`...
 
 `Replication_info` is a versatile one. It accepts 3 kinds of parameters:
 
@@ -128,6 +135,7 @@ So the `patroni.json` will be then very different in terms of values:
 {
     "Cluster"          : "", 
     "Remote_host"      : "",
+    "Remote_port"      : 22,
     "Remote_user"      : "",
     "Use_sudo"         : "",
     "Ssh_private_key"  : "",

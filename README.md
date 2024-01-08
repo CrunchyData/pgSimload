@@ -4,7 +4,7 @@ Welcome to pgSimload !
 
 The actual version of the program is: 
 
-**pgSimload version 1.0.0 - December, 8th 2023**
+**pgSimload version 1.0.1 - January, 8th 2024**
 
 pgSimload is a tool written in Go, and accepts 2 different modes of execution:
 
@@ -19,6 +19,32 @@ contexts of executions are different. Please refer to the complete
 documentation in [docs/pgSimload.doc.md](doc/pgSimload.doc.md)
 
 # Release notes
+
+## Version 1.0.1 (January, 8th 2024)
+
+- new SSHManager for Patroni Watched mode
+
+The way the Patroni watcher is handled in SSH (i.e not in Kubernetes modes)
+has been refactored. Previously, an SSH connection was initiated at each loop
+of the Patroni watcher. This was not very efficient, because at each
+`Watch_timer` an SSH connection was opened, the `patronictl` command
+initiated, the output shown, then the SSH connection was closed.
+
+An SSHManager has then been added to manage this, at not only it is more
+efficient, and an unique SSH connection is used, but also, it will manage any
+disconnections of the SSH server itself, trying to reinitiate the SSH
+connection if the previous died.
+
+A bit more of code refactoring has been added too, so the dependances to the
+`bytes` and `net` packages have been removed.
+
+- new parameter in `patroni.json` file : `Remote_port` parameter has been
+  added (integer), so you can specify the port of your SSH Server explicitery. 
+- updated Go modules
+- rebuild of binaries
+- tagging version 1.0.1
+- updated any `patroni.json` file types in the examples to add `Remote_port`
+- updated the documentation about `Remote_port` in `patroni.json` files
 
 ## Version 1.0.0 (December, 8th 2023)
 

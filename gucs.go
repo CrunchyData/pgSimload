@@ -5,7 +5,6 @@ import (
 	"fmt"
   "flag"
   "io/ioutil"
-	"github.com/jackc/pgx/v5"
   "github.com/MakeNowJust/heredoc"
 )
 
@@ -14,7 +13,6 @@ var (
   sessiongucs               string = ""
   sessiongucsfilename       stringFlag
   gathergucsfilename        stringFlag
-
   gather_gucs_query = heredoc.Doc(`
 select 
     E'    {\n'
@@ -52,17 +50,26 @@ ORDER BY 1;
 // that this function will write into (gathergucsfilename.value) 
 func gatherGucs () {
 
-  connectionInstance, err := pgx.Connect(context.Background(), ReadConfig())
+  pgManager, err := NewPGManager(configfilename.value)
+	if err != nil {
+    exit1("Failed to create PGManager:\n", err)
+	}
 
-  if err != nil {
-    exit1("Could not connect to Postgres:\n",err)
-  }
+  // Initial connection
+	conn, err := pgManager.PGConnect()
+	if err != nil {
+    //we won't try to reconnect here, since GUCS generation file
+    //is an unitary operation...
+    exit1("Failed to connect to PostgreSQL:\n", err)
+	}
+
+	defer conn.Close(context.Background())
 
   flag.Parse()
 
   var file string = gather_gucs_file_header
 
-  rows, _ := connectionInstance.Query(context.Background(), gather_gucs_query)
+  rows, _ := conn.Query(context.Background(), gather_gucs_query)
 
   defer rows.Close()
 
@@ -91,13 +98,9 @@ func gatherGucs () {
  
 	err = ioutil.WriteFile(gathergucsfilename.value, []byte(file), 0644)
 
-  err = connectionInstance.Close(context.Background())
-
-  if err != nil {
-    exit1("Unable to close connection\n",err)
-  }
-
+  fmt.Print(string(colorGreen))
   fmt.Println("Session parameters template file created !")
+  fmt.Print(string(colorReset))
   fmt.Println("You can now edit "+gathergucsfilename.value+" to suit your needs")
   fmt.Println("to be used afterwards with -session_parameters in SQL-loop mode")
 

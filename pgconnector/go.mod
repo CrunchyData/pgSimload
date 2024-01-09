@@ -1,4 +1,4 @@
-module pgconnector
+module github.com/CrunchyData/pgSimload/pgconnector
 
 go 1.21.1
 

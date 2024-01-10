@@ -5,8 +5,10 @@ import (
     "fmt"
     "time"
     "github.com/jackc/pgx/v5"
+    "github.com/jackc/pgx/v5/pgconn"
     "os"
     "encoding/json"
+    "errors"
 )
 
 // PGClientConfig represents the PostgreSQL client configuration.
@@ -71,20 +73,59 @@ func (pm *PGManager) PGConnect() (*pgx.Conn, error) {
 }
 
 // PGReconnectWithTimeout attempts to reconnect to the PostgreSQL database within a specified timeout.
-func (pm *PGManager) PGReconnectWithTimeout(timeout time.Duration) error {
+func (pm *PGManager) PGReconnectWithTimeout(timeout time.Duration, err error) error {
+  var message string
 	startTime := time.Now()
 
 	for time.Since(startTime) < timeout {
-		fmt.Println("Attempting to reconnect...")
+
+    var pgErr *pgconn.PgError
+
+    if errors.As(err, &pgErr) {
+      //pgerr(err, pgErr,false)
+      switch (pgErr.Code) {
+        case "25P01","25P02","25P03","25006":
+          //fmt.Printf(  "\r[25...] PG server in recovery mode    : Actual downtime %d seconds             ", actual_downtime)
+          message = "PG server in recovery mode    "
+        case "28000", "28P01":
+          message = "Invalid auth                  "
+        case "57P01":
+           message = "PG terminated by admin cmd    "
+        case "57P02":
+           message = "PG crash shutdown             "
+        case "57P03":
+           message = "Cannot connect now            "
+        case "57P04":
+           message = "Database dropped              "
+        case "57P05":
+           message = "Idle session timeout          "
+        case "42601":
+           message = "Syntax error in SQL           "
+        default:
+           message = "Other error from PG           "
+      }
+
+      fmt.Print(string(colorRed))
+      fmt.Printf("\r[%s] %s : downtime %.2fs                      ", pgErr.Code,message, time.Since(startTime).Seconds())
+      fmt.Print(string(colorReset))
+
+    } else {
+       fmt.Print(string(colorRed))
+       fmt.Printf("\rTry reconnecting to PostgreSQL         : downtime %.2fs ", time.Since(startTime).Seconds())
+       fmt.Print(string(colorReset))
+    }
+ 
+		//fmt.Println("Attempting to reconnect...")
 
 		err := pm.pgConnectWithRetry()
 		if err == nil {
-			fmt.Println("Reconnected successfully.")
+      fmt.Print(string(colorGreen))
+			fmt.Println("\nReconnected successfully !")
+      fmt.Print(string(colorReset))
 			return nil
 		}
 
-		fmt.Printf("Reconnection attempt failed: %v\n", err)
-		time.Sleep(500 * time.Millisecond) // Adjust the retry interval based on your needs
+		time.Sleep(500 * time.Millisecond)
 	}
 
 	return fmt.Errorf("failed to reconnect within %s", timeout)

@@ -4,7 +4,7 @@ Welcome to pgSimload !
 
 The actual version of the program is:
 
-**pgSimload dev - 1.0.2 (started January 9th 2023)**
+**pgSimload version 1.0.2 - January, 11th 2024**
 
 pgSimload is a tool written in Go, and accepts 2 different modes of execution:
 

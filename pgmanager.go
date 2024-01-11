@@ -106,12 +106,12 @@ func (pm *PGManager) PGReconnectWithTimeout(timeout time.Duration, err error) er
       }
 
       fmt.Print(string(colorRed))
-      fmt.Printf("\r[%s] %s : downtime %.2fs                      ", pgErr.Code,message, time.Since(startTime).Seconds())
+      fmt.Printf("\r[%s] %s : downtime %s                      ", pgErr.Code,message, time.Since(startTime).Truncate(time.Second).String())
       fmt.Print(string(colorReset))
 
     } else {
        fmt.Print(string(colorRed))
-       fmt.Printf("\rTry reconnecting to PostgreSQL         : downtime %.2fs ", time.Since(startTime).Seconds())
+       fmt.Printf("\rTry reconnecting to PostgreSQL         : downtime %s ", time.Since(startTime).Truncate(time.Second).String())
        fmt.Print(string(colorReset))
     }
  
@@ -120,7 +120,7 @@ func (pm *PGManager) PGReconnectWithTimeout(timeout time.Duration, err error) er
 		err := pm.pgConnectWithRetry()
 		if err == nil {
       fmt.Print(string(colorGreen))
-			fmt.Println("\nReconnected successfully !")
+			fmt.Printf("\nReconnected successfully after %s downtime", time.Since(startTime).Truncate(time.Second).String())
       fmt.Print(string(colorReset))
 			return nil
 		}

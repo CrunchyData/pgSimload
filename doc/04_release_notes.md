@@ -1,21 +1,30 @@
 # Release notes
 
-## Version dev (- 1.0.2 (started January 9th 2023))
+## Version 1.0.2 (January 11th 2023)
 
-- split main.go in main.go, gucs.go, patroni.go and sqlloop.go for better
-  maintenability  (DONE)
+- split main.go in many other .go files for better
+  maintenability. This will allow usage of Go Packages further more easily 
 
-- split documentation in parts for better maintenability too (DONE)
+- split documentation in parts for better maintenability too
 
 - main README.md of the project is a symlink to `doc/01_readme.md`
 
 - README.md of the `doc/` is the same symlink
 
-- currently working on a PGManager to work on a permanently opened PG connex
-  when working in SQL-Loop and Patroni Watcher (*with* the `Replication_info`
-  enabled than needs a PG connex too, as *superuser*). Plan is to create a 
-  new module pgconnector to handle everything about database connections (WIP)
+- new PGManager for everything
 
+Same I did in version 1.0.1 with SSHManager, now PG connections are handled
+by a manager. First, this bring cleaner code. Second, it allows pgSimload to
+function with an unique connection to the PG database, wheter it is used in
+SQL-Loop mode or Patroni Watcher mode. It doesn't change dramatically things
+in the SQL-Loop mode, because previously, an unique connection was used in the
+main loop (but others to set transactions GUCS, if used, and Exectute script
+if used, where still independant connections). But for the Patroni Watcher, it
+changes things a lot, allowing the Replication info output to be faster, and
+offers less "flickering", because we don't pay anymore the connexion time,
+which has the most cost in time execution.
+
+- more code cleaning everywhere
 
 ## Version 1.0.1 (January, 8th 2024)
 

@@ -23,41 +23,34 @@ const (
 
 var (
   //Patroni watcher mode
-  patroni_watch_timer       int
   remote_command            string
+  patroni_watch_timer       int = 0
   patroniconfigfilename     stringFlag
   patronictlout             string = ""
   pod                       string = ""
-  // variables to handle exec time 
-  // and adjust the loop to match
-  // user's expectations
-  start                     time.Time
-  //real_exec_time            time.Duration
 
   replication_info_query = heredoc.Doc(`
 select                            
     3
     ,'GUC'
-    ,rpad(name,32)
-    ,rpad(current_setting(name),72)
+    ,rpad(name,30)
+    ,rpad(current_setting(name),70)
     from
       pg_settings where name in (XXX)
   UNION
   select 
     2
-    ,rpad((application_name||' Replica (TL:'||(SELECT timeline_id FROM pg_control_checkpoint())||')'),32)
-    ,rpad('Sync state : '||sync_state,37)
-    ,rpad(coalesce('Write lag  : '||write_lag,'No write lag'),32)
+    ,rpad((application_name||' Replica (TL:'||(SELECT timeline_id FROM pg_control_checkpoint())||')'),30)
+    ,rpad('Sync state : '||sync_state,35)
+    ,rpad(coalesce('Write lag  : '||write_lag,'No write lag'),30)
   from  
     pg_stat_replication
   UNION 
   select 
     1
-,rpad(regexp_replace(pg_read_file('/etc/hostname'), '\r|\n', '',
-'g')::text||(case when pg_is_in_recovery() then ' Replica ' else ' Leader  '
-end)||'(TL:'||(SELECT timeline_id FROM pg_control_checkpoint())||')',32)
-    ,rpad('Started : '||(to_char(pg_postmaster_start_time(),'YYYY-MM-DD HH24:MI:SS (TZ)')),37)
-    ,rpad('Uptime : '||age(current_timestamp,pg_postmaster_start_time()),32)
+,rpad(regexp_replace(pg_read_file('/etc/hostname'), '\r|\n', '', 'g')::text||(case when pg_is_in_recovery() then ' Replica ' else ' Leader  ' end)||'(TL:'||(SELECT timeline_id FROM pg_control_checkpoint())||')',30)
+    ,rpad('Started : '||(to_char(pg_postmaster_start_time(),'YYYY-MM-DD HH24:MI:SS (TZ)')),35)
+    ,rpad('Uptime : '||age(current_timestamp,pg_postmaster_start_time()),30)
   order by 1,2,3;
   `)
 )
@@ -102,54 +95,6 @@ func patronictloutColorize(input string) string {
   return output
 }
 
-// this function is used to sleep for an amount of time that is
-// computed between the start of the process to show patronictlout
-// with or without Replication info given:
-//
-// real_exec is the Time the whole thing took
-// goal      is an integer(seconds) that is the goal to reach 
-//           given by patroni_config.Watch_timer by the user
-// 
-// once computed, this functions does a sleep() for the right
-// amount of time that is computed on each cycle
-//
-// since the conversions int64 <> Duration are complicated 
-// I've put this out of the code in another func() for more
-// readability 
-func ComputedSleep (real_exec_time time.Duration, goal int) {
-
-  //covert the duration into milliseconds (int64)
-  real_exec_time_ms := real_exec_time.Milliseconds()
-
-  //convert the goal(int) into milliseconds (int64)
-  watch_timer_ms    := int64(goal) * int64(time.Second) / int64(time.Millisecond)
-
-  //compute the sleep time in ms (int64)
-  sleep_time_ms     := watch_timer_ms - real_exec_time_ms
-
-  //if the sleep time is negative, don't sleep, but send a message to the user
-  //so he adapts his way too much demanding parameter in patroni_config.Watch_timer
-  //because the system can't do that this often..
-  if sleep_time_ms < 0 {
-    fmt.Print(string(colorRed))
-    fmt.Printf("Your system is too slow to do update output each %ds! ",goal)
-    fmt.Println("\nPlease raise Watch_timer value in your patroni.json file...")
-    fmt.Print(string(colorReset))
-  } else {
-    //sleep_time_ms is positive so we can sleep a bit then, to match the goal
-
-    //compute the sleep time into Duration in Milliseconds
-    sleep_time        := time.Duration(sleep_time_ms) * time.Millisecond
-
-    //DEBUG
-    //fmt.Printf("\nDEBUG: Watch_timer              : %dms", watch_timer_ms)
-    //fmt.Printf("\nDEBUG: Duration (value)         : %dms", real_exec_time_ms)
-    //fmt.Printf("\nDEBUG: Sleep for                : %dms", sleep_time_ms)
-
-    //do sleep a bit now we've computed how long to sleep, to match the goal
-	  time.Sleep(sleep_time)
-  }
-}
 
 // function ReadPatroniConfig() to
 // read patroni.json to get parameters about Patroni monitoring mode
@@ -237,8 +182,7 @@ func Replication_info(user_gucs string, pgManager *PGManager) {
   //DEBUG 
   //fmt.Println("DEBUG : Replication info query is :",replication_info_query)
 
-  output := "+----------------------------------+---------------------------------------+----------------------------------+\n"
-  //fmt.Println("+----------------------------------+---------------------------------------+----------------------------------+")
+  fmt.Println("+----------------------------------+---------------------------------------+----------------------------------+")
 
   row_count := 0
  
@@ -257,11 +201,9 @@ func Replication_info(user_gucs string, pgManager *PGManager) {
     row_count++
 
     if column1 != "GUC" {
-      //fmt.Println("| ",column1," | ",column2," | ",column3," |")
-      output = output + "| " + column1 + " | " + column2 + " | " + column3 + " |\n"
+      fmt.Println("| ",column1," | ",column2," | ",column3," |")
     } else {
-      //fmt.Println("| ",column2," | ",column3," |")
-      output = output + "| " + column2 + " | " + column3 + " |\n"
+      fmt.Println("| ",column2," | ",column3," |")
     }
   }
 
@@ -313,10 +255,7 @@ func Replication_info(user_gucs string, pgManager *PGManager) {
   }
 ************/
 
- 
-  output = output + "+----------------------------------+---------------------------------------+----------------------------------+\n"
-  //fmt.Println("+----------------------------------+---------------------------------------+----------------------------------+")
-  fmt.Println(output)
+  fmt.Println("+----------------------------------+---------------------------------------+----------------------------------+")
 
   rows.Close()
 
@@ -364,7 +303,7 @@ func PatroniWatch_ssh(patroni_config PatroniConfig, remote_command string, pgMan
 			  }
 		  default:
 
-        start = time.Now()
+        err_start_sec = time.Now().Unix()
 
         //execution on SSH boxes
 
@@ -392,8 +331,11 @@ func PatroniWatch_ssh(patroni_config PatroniConfig, remote_command string, pgMan
           patronictlout = string(output)
 		    }
 
+        err_stop_sec = time.Now().Unix() - err_start_sec
 
         if patroni_config.Watch_timer > 1 {
+
+          patroni_watch_timer = patroni_config.Watch_timer
 
           // Clears the screen
           screen.Clear()
@@ -410,12 +352,13 @@ func PatroniWatch_ssh(patroni_config PatroniConfig, remote_command string, pgMan
             Replication_info(patroni_config.Replication_info, pgManager)
           }
   
-          real_exec_time    := time.Since(start)
-
-          //sleep for a computed time to match patroni_config.Watch_timer
-          //see ComputedSleep comment for more explanations
-          ComputedSleep (real_exec_time, patroni_config.Watch_timer)
-           
+          //we will sleep around patroni_watch_timer value : it's the goal
+          //but the ssh execution time has to be taken in consideration
+          //since it can take several seconds to execute
+          //so we redefine the watch_timer on the fly to match the goal
+          //adapting the program to the SSH execution time
+          patroni_watch_timer = patroni_watch_timer - int(err_stop_sec)
+	        time.Sleep(time.Duration(patroni_watch_timer) * 1000 * time.Millisecond)
 
         } else {
 
@@ -467,7 +410,7 @@ func PatroniWatch_k8s(patroni_config PatroniConfig, remote_command string, pgMan
 			}
 		  default:
 
-        start = time.Now()
+        err_start_sec = time.Now().Unix()
 
         //initiate error counter  
         err_count := 0
@@ -528,6 +471,8 @@ func PatroniWatch_k8s(patroni_config PatroniConfig, remote_command string, pgMan
 
         patronictlout = string(out)
 
+        err_stop_sec = time.Now().Unix() - err_start_sec
+
         if patroni_config.Watch_timer > 1 {
 
           patroni_watch_timer = patroni_config.Watch_timer
@@ -547,11 +492,13 @@ func PatroniWatch_k8s(patroni_config PatroniConfig, remote_command string, pgMan
               Replication_info(patroni_config.Replication_info, pgManager)
           }
   
-          real_exec_time :=  time.Since(start)
-
-          //sleep for a computed time to match patroni_config.Watch_timer
-          //see ComputedSleep comment for more explanations
-          ComputedSleep (real_exec_time, patroni_config.Watch_timer)
+          //we will sleep around patroni_watch_timer value : it's the goal
+          //but the ssh execution time has to be taken in consideration
+          //since it can take several seconds to execute
+          //so we redefine the watch_timer on the fly to match the goal
+          //adapting the program to the SSH execution time
+          patroni_watch_timer = patroni_watch_timer - int(err_stop_sec)
+	        time.Sleep(time.Duration(patroni_watch_timer) * 1000 * time.Millisecond)
 
         } else {
 

@@ -7,7 +7,7 @@
 
 - split documentation in parts for better maintenability too
 
-- main README.md of the project is a symlink to `doc/01_readme.md`
+- main README.md of the project is a symlink to `/00_readme.md`
 
 - README.md of the `doc/` is the same symlink
 
@@ -66,3 +66,4 @@ What's new?
 ## Version 1.0.0-beta (July, 24th 2023)
 
 First release of pgSimload !
+

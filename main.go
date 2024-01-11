@@ -4,11 +4,11 @@ import (
 	"fmt"
   "flag"
 	"os"
-  "io/ioutil"
 	"github.com/eiannone/keyboard"
   "encoding/json"
   "github.com/MakeNowJust/heredoc"
 )
+//"io/ioutil"
 
 const (
 	colorReset  = "\033[0m"
@@ -271,56 +271,8 @@ func main() {
 			  break
 		  } else if key == keyboard.KeyEnter {
    
-        if createfilename.set { 
-
-          //user requested to execure a SQL DML/DDL script
-          //before looping on the queries of the SQL script 
-          //so we do exec it
-          ExecCreate()
-        }
-
-        if sessiongucsfilename.set { 
-
-          //user requested to throw special SET TRANSACTIONs parameters
-          //before looping on the queries of the SQL Script
-          //we create a SQL text file to be sent prior executing the main loop
-          
-          flag.Parse()
-
-          // Open the session_parameters JSON file
-          gucs_parameters_file, err := os.Open(sessiongucsfilename.value)
-  
-          // if we os.Open returns an error then handle it
-          if err != nil {
-            exit1("Could not open session parmeters GUCs file:\n", err)
-          }     
-  
-          fmt.Println("The following Session Parameters are set:")
-  
-          // defer the closing of our jsonFile so that we can parse it later on
-          defer gucs_parameters_file.Close()
-    
-          // read our opened xmlFile as a byte array.
-          byteValue, _ := ioutil.ReadAll(gucs_parameters_file)
-  
-          // we initialize our SessionParameters array
-          var q SessionParameters
-  
-          // we unmarshal our byteArray which contains our
-          // jsonFile's content into 'sessionparameters' which we defined above
-          json.Unmarshal(byteValue, &q)
-    
-          // we iterate through every SessionParameter within our
-          // SessionParametersarray and print out the SessionParameter Type
-          // the name and the value
-          for i := 0; i < len(q.SessionParameters); i++ {
-            sessiongucs = sessiongucs + "SET " + q.SessionParameters[i].Parameter + " TO '" + q.SessionParameters[i].Value + "';\n"
-            fmt.Println("  ","SET " + q.SessionParameters[i].Parameter + " TO '" + q.SessionParameters[i].Value + "';")
-          }
-        }
-
 	      fmt.Println("")
-        sqlloop()
+        SQLLoop()
 			  break
 		  }
 	  }

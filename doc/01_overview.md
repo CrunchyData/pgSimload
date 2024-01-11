@@ -16,7 +16,10 @@ pgSimload is a tool written in Go, and accepts 2 different modes of execution:
 
 Given the mode you choose, some parameters are mandatory or not. And the
 contexts of executions are different. Please refer to the complete
-documentation in [docs/pgSimload.doc.md](https://github.com/CrunchyData/pgSimload/blob/main/doc/pgSimload.doc.md)
+documentation in
+[docs/pgSimload.doc.md](https://github.com/CrunchyData/pgSimload/tree/master/doc).
+
+Alternatively, you can download the [documentation in PDF format](https://github.com/CrunchyData/pgSimload/blob/master/doc/pgSimload.doc.pdf).
 
 # Running, Building and Installing binary
 
@@ -44,7 +47,8 @@ Feedback is welcome in any cases!
 
 ## Building binaries
 
-You can use the provided script [build.sh](https://github.com/CrunchyData/pgSimload/blob/main/build.sh):
+You can use the provided script
+[build.sh](https://github.com/CrunchyData/pgSimload/blob/master/build.sh).
 
 ```code 
 $ sh build.sh

@@ -7,7 +7,7 @@ require (
 	github.com/eiannone/keyboard v0.0.0-20220611211555-0d226195f203
 	github.com/inancgumus/screen v0.0.0-20190314163918-06e984b86ed3
 	github.com/jackc/pgx/v5 v5.5.1
-	golang.org/x/crypto v0.17.0
+	golang.org/x/crypto v0.18.0
 )
 
 require (

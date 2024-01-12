@@ -7,19 +7,15 @@ import (
 	"os"
   "time"
   "io/ioutil"
-  "strings"
 	"github.com/eiannone/keyboard"
   "encoding/json"
-  "regexp"
 )
 
 var (
 	success_count      int64 = 0
 	errors_count       int64 = 0
   err_start_time     time.Time 
-  err_stop_time      time.Time 
   total_start_time   time.Time 
-  actual_downtime    time.Duration
   total_downtime     time.Duration = 0
 )
 
@@ -158,20 +154,38 @@ func do_sqlloop(pgManager *PGManager) {
     exit1("Could not read script file:\n" , err)
   }
 
-  statements := strings.Split(string(script_file), ";\n")
+  statements := string(script_file)
 
-  // last element is an empty line
-  statements = statements[:len(statements)-1]
+  //DEBUG
+  //exit1(string(script_file),nil)
 
-	fmt.Println()
-	//fmt.Println("Statements for main loop loaded!")
-  fmt.Printf("Now entering the main loop, executing script %q\n",scriptfilename.value) 
+  //test script once to ensure there's no errors in it
+  bad_script := 0
+ 
+  // Exec executes SQL via the PostgreSQL simple query protocol. SQL may contain multiple queries. Execution is
+  // implicitly wrapped in a transaction unless a transaction is already in progress or SQL contains transaction control
+  // statements. 
+  // see https://github.com/jackc/pgx/blob/master/pgconn/pgconn.go#L1047C1-L1049C15
+  _, err = pgManager.conn.Exec(context.Background(), statements)
+
+  if err != nil { 
+    bad_script += 1
+  }
+
+  if bad_script > 0 {
+    message := "Execution of SQL script in "+scriptfilename.value+" returns errors"
+    message = message + "\nPlease correct the errors prior running pgSimload."
+    exit1(message,nil)
+  } else {
+	  fmt.Println()
+    fmt.Printf("Now entering the main loop, executing script %q\n",scriptfilename.value) 
+  }
 
   //store Time when we started the loop
   total_start_time = time.Now()
 	
-  // MAIN loop on your command(s) in script.sql
-	// This is to be able to stop the loop on <Esc>
+  // MAIN loop on SQL content of script.sql
+	// This is to be able to stop the loop on <Esc> key
 	stopCh := make(chan bool)
 	go func() {
 
@@ -195,140 +209,110 @@ loop:
 			}
 		default:
 
-      var previous_stmt_error bool = false
-      var previous_loop_error bool = false
+      _, err := pgManager.conn.Exec(context.Background(), statements)
 
-      for _, statement := range statements {
+      if err != nil { 
+        //the last execution of the script is in error
 
-        // we first lowercase the statement which facilitates a later search
-        // for insert, delete, update and select in a later regexp
-        // because we only count those statemets in the counters
-        statement = strings.ToLower(statement)
-
-        //we execute each statement, one by one
-        _, err := pgManager.conn.Exec(context.Background(), statement)
-
-        if err != nil { 
-          //the last statement is in error
-
-          //if we were not in error until now,
-          //we set the current time as the start 
-          //time of errors
-          if err_start_time.IsZero() {
-            err_start_time = time.Now()
-          }
-
-          actual_downtime = time.Since(err_start_time)
-    
-          match, _ := regexp.MatchString("(select|delete|update|insert)", statement)
-          if match {
-            errors_count += 1 
-          }
-
-          previous_stmt_error = true
-          previous_loop_error = true
-
-        } else {
-          //the last statement is executed OK
-
-          //we check if the statement is any of SELECT, DELETE, UPDATE, INSERT
-          //executed because we only count those in the statements counters
-          match, _ := regexp.MatchString("(select|delete|update|insert)", statement)
-          if match {
-            if ! err_start_time.IsZero() {
-              err_stop_time = time.Now()
-              //total_downtime += err_stop_sec - err_start_sec
-              total_downtime += time.Since(err_start_time)
-              //err_start_time = nil
-              err_start_time = time.Time{}
-            } else {
-              success_count += 1
-            }
-          }
-          previous_stmt_error = false
+        //if we were not in error until now,
+        //we set the current time as the start 
+        //time of errors
+        if err_start_time.IsZero() {
+          err_start_time = time.Now()
         }
-      } //for _, statement := range statements {
 
-      //test connection
-      err := pgManager.conn.Ping(context.Background())
-      if err != nil {
-        err := pgManager.PGReconnectWithTimeout(pgReconnectTimeout,err)
-        if err != nil {
-          exit1("Failed to reconnect:\n", err)
-        }
-      }
+        errors_count += 1 
 
-      //if there were no error executing the WHOLE script.sql (all
-      //statements) THEN ONLY we print the update of statements succeeded
-      if !previous_stmt_error {
-        if previous_loop_error {
-          //if the previous loop was in error
-          //now it isn't anymore so we can output a message
-          //to say everything went back to normal after the last downtime
-          previous_loop_error = false
-          actual_downtime = 0
-        } 
-
-        // print out results of execution of all statements
         //DEBUG
-        //fmt.Printf("\rScript statements succeeded   : |%08d|                             %s\n", success_count, statement)
+        //fmt.Println("DEBUG: errors_count: "+ string(errors_count))
+        //fmt.Println("DEBUG: statements  : "+ statements)
+
+        //we may have been connected ? Let's ping the server
+        //if we don't have an answer, try to reconnect instead
+
+        //test connection
+        //err := pgManager.conn.Ping(context.Background())
+        err = pgManager.conn.Ping(context.Background())
+        if err != nil {
+          err := pgManager.PGReconnectWithTimeout(pgReconnectTimeout,err)
+          if err != nil {
+            exit1("\nUnable to reconnect to PostgreSQL:\n", err)
+          }
+        }
+      } else {
+
+        //the last execution of the script is OK
+
+        if ! err_start_time.IsZero() {
+          total_downtime += time.Since(err_start_time)
+          err_start_time = time.Time{}
+        } else {
+          success_count += 1
+        }
+
         fmt.Print(string(colorGreen))
         fmt.Printf(ClearLine);
-        fmt.Printf("\rScript statements succeeded   : |%08d|                               ", success_count)
+        fmt.Printf("\rScript executions succeeded : %10d                               ", success_count)
         fmt.Print(string(colorReset)) 
-      } else {
-        previous_loop_error = true
       }
     }
   }
 
+  // end of the main SQL Loop, time to compute times, etc..
+  // and print the summary before exiting
 	fmt.Println(string(colorReset))
 
   total_exec_time := time.Since(total_start_time)
 
-  var statements_per_sec int64
+  var statements_per_sec float64
 
-  if total_exec_time == 0 {
-    statements_per_sec = success_count
+  if total_exec_time < 1 {
+    statements_per_sec =  float64(success_count)
   } else {
-    statements_per_sec = success_count / int64(total_exec_time.Seconds())
+    statements_per_sec = float64(success_count) / total_exec_time.Seconds()
   }
  
   //clear current line : shows the previous "running counter"
-  fmt.Printf(ClearLine);
-  fmt.Printf(MoveCursorCol1);
-  fmt.Printf(ClearLine);
-  fmt.Printf(MoveCursorCol1);
+  //fmt.Printf(MoveCursorCol1);
+  //fmt.Printf(ClearLine);
 
   // print a Summary
   fmt.Println("=========================================================================")
   fmt.Println("Summary")
   fmt.Println("=========================================================================")
   fmt.Print(string(colorGreen))
-  fmt.Printf("\rScript statements commits     : %8d", success_count)
-  fmt.Printf(" (statements/second : %4d)\n", statements_per_sec)
+  //fmt.Printf("\rScript statements commits   : %8d", success_count)
+  fmt.Printf("\rScript executions succeeded : %10d", success_count)
+
+  fmt.Printf(" (%.3f scripts/second)\n", statements_per_sec)
  
   if errors_count > 0  {
     fmt.Print(string(colorRed))
     if total_downtime == 0 {
-      statements_per_sec = errors_count
+      statements_per_sec = float64(errors_count)
     } else {
-      statements_per_sec = errors_count / int64(total_downtime.Seconds())
+      statements_per_sec = float64(errors_count) / total_downtime.Seconds()
     }
-    fmt.Printf("\rScript statements rollbacks   : %8d", errors_count)
-    fmt.Printf(" (statements/second : %4d)\n", statements_per_sec)
+    fmt.Printf("\rScript executions rollbacks : %10d", errors_count)
+    fmt.Printf(" (%.3f scripts/second)\n", statements_per_sec)
   } else {
     fmt.Print(string(colorGreen))
-    fmt.Printf("\rScript statements rollbacked  : none")
+    fmt.Printf("\rScript scripts rollbacked: none")
   }
 
+  //print out total exec time in Milliseconds if < 10 min total time
+  //print out total exec time in Seconds otherwise
   fmt.Print(string(colorGreen))
-  fmt.Printf("\rTotal exec time               : %8s\n", total_exec_time.Truncate(time.Second).String())
+  if total_exec_time.Truncate(time.Minute) < 10 {
+    fmt.Printf("\rTotal exec time             : %10s\n", total_exec_time.Truncate(time.Millisecond).String())
+  } else {
+    fmt.Printf("\rTotal exec time             : %10s\n", total_exec_time.Truncate(time.Second).String())
+  }
   fmt.Print(string(colorReset))
  
   if !(total_downtime==0) {
     fmt.Print(string(colorRed))
-    fmt.Printf("\rTotal downtime                : %8s\n", total_downtime.Truncate(time.Second).String())
+    fmt.Printf("\rTotal real downtime         : %10s\n", total_downtime.Truncate(time.Millisecond).String())
     fmt.Print(string(colorReset))
   }
 

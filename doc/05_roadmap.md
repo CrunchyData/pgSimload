@@ -32,25 +32,24 @@ The `output_type` will allow (as a start?) the user to set wheter:
   - a nice output on screen with colored progress bars, ETAs, etc (one line
     per client)
 
-## More code cleaning
+### More code cleaning
 
 Because, heh, I'm a noob Go coder. Trying to do good, but I must admit it's a
 long way.
 
-## Study and pgmanager.go and jackc
+### Study and pgmanager.go and jackc
 
 I did this thing but I wonder if I'm using
 [jackc](https://github.com/jackc/pgerrcode) properly... Probably what I've did
 here is already done...
 
-## Study and adapt pgmanager.go vs pgcon and pgerrcode
+### Study and adapt pgmanager.go vs pgcon and pgerrcode
 
 Same thing with pgcon I use for PG Error codes and
 [pgerrcode](https://github.com/jackc/pgerrcode)... I trap some error codes to
 output a right message to the user, but maybe I'd rather use this project,
 that contains all the error codes PG has (v.14 still... hopefully PGDG won't
 touch this ?)...
-
 
 ## Longer term
 

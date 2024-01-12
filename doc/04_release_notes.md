@@ -1,5 +1,64 @@
 # Release notes
 
+## Version 1.0.3 (Current dev)
+
+### Major changes
+
+- don't ping the server in between operations, but only do that **on error** 
+  to check that the server is living or not. If not, try reconnecting as
+  before... I used the right method for 1.0.2.. but at the wrong place. Sorry,
+  this was eating useless performances! (ping roundtrip >> query exec in most
+  scenarios..)
+
+- don't parse `script.sql`. It's useless because Exec() handles multiple
+  queries on a same file. And it does implicit transactions (so need to add
+  begin/(commit|rollback) in the script file. Results in simplier code and
+  fastest exection too!
+
+### Minor changes
+
+**TODO**
+
+- review doc to state the major change around parsing/execution 
+- fix rowcount == 0 in patroni.go / Replication info
+
+**DONE**
+
+- removed the test that looks for `ssh` binary locally, because what is is
+  used is `sshManager.RunCommand(remote_command)`
+
+- constructing the Replication info output in a string and throw it to the
+  screen at once, rather than Println one line by one. To reduce flickering.
+
+- added ComputedSleep() function in `patroni.go` to compute precisely how
+  much to wait between 2 cycles tring to match user's expectations with
+  `Watch_timer` parameter in the `patroni.json` file
+
+- added a warning if the system takes longer to output than the user
+  expects it to be with then `Watch_timer` parameter in the `patroni.json`
+  file
+
+- added a prior check in `sqlloop.go` to check the validity of the SQL
+  in the `script.sql` file
+
+- `strings` and `regexp` packages no more needed in `sqlloop.go`
+
+- `github.com/jackc/pgx/v5` package no more needed in `patroni.go`
+
+
+- changed "Statements" by "Scripts" in summary and loop info, because it's no
+  more statements, it's the *whole* script that it is Exec() at once !
+
+- review error code outputs
+
+- pgReconnectTimeout moved from 30s to 20s, and moved to pgmanager.go (was in
+  patroni.go)
+
+- add more precise numbers in Summary of execution (times of
+  execution/downtime and statements per second)
+
+- corrected paragraph ordering in `doc/05_roadmap.md`
+
 ## Version 1.0.2 (January 11th 2023)
 
 - split main.go in many other .go files for better

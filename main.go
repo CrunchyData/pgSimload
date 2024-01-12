@@ -31,7 +31,8 @@ var (
   createfilename            stringFlag
   scriptfilename            stringFlag
 
-  Version = "pgSimLoad v.1.0.2 - January 11th 2023"
+  //Version = "pgSimLoad v.1.0.3 - January xxth 2023"
+  Version = "pgSimLoad v.1.0.3 - **DEV**"
 
   License = heredoc.Doc(`
 **The PostgreSQL License**

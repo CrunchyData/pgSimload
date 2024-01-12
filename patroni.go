@@ -15,12 +15,6 @@ import (
   "regexp"
 )
 
-  //"github.com/jackc/pgx/v5"
-
-const (
-	pgReconnectTimeout = 30 * time.Second
-)
-
 var (
   //Patroni watcher mode
   patroni_watch_timer       int
@@ -32,7 +26,6 @@ var (
   // and adjust the loop to match
   // user's expectations
   start                     time.Time
-  //real_exec_time            time.Duration
 
   replication_info_query = heredoc.Doc(`
 select                            
@@ -162,7 +155,7 @@ func ReadPatroniConfig () PatroniConfig {
   configuration := PatroniConfig{}
   err := decoder.Decode(&configuration) 
   if err != nil {
-    message := "Error while reading the file provided -patroni "
+    message := "Error while reading the file "
     message = message + patroniconfigfilename.value +":\n"
     exit1(message,err)
   }
@@ -173,21 +166,18 @@ func ReadPatroniConfig () PatroniConfig {
 
 func Replication_info(user_gucs string, pgManager *PGManager) {
 
-  fmt.Println("+ Replication information")
-
   //test connection
 	err := pgManager.conn.Ping(context.Background())
 	if err != nil {
     fmt.Print(string(colorRed))
-    fmt.Println("+ Failover or switchover in progress ?")
-    fmt.Println("+ Trying to reconnect every half-second for 20s max")
+    //fmt.Println("+ Failover or switchover in progress ?")
+    //fmt.Println("+ Trying to reconnect every half-second for 20s max")
     fmt.Print(string(colorReset))
 		err := pgManager.PGReconnectWithTimeout(pgReconnectTimeout,err)
 		if err != nil {
       exit1("Failed to reconnect:\n", err)
 	  }
   }
-
 
   flag.Parse()
 
@@ -237,8 +227,8 @@ func Replication_info(user_gucs string, pgManager *PGManager) {
   //DEBUG 
   //fmt.Println("DEBUG : Replication info query is :",replication_info_query)
 
-  output := "+----------------------------------+---------------------------------------+----------------------------------+\n"
-  //fmt.Println("+----------------------------------+---------------------------------------+----------------------------------+")
+  output := "+ Replication information\n"
+  output = output + "+----------------------------------+---------------------------------------+----------------------------------+\n"
 
   row_count := 0
  
@@ -257,66 +247,36 @@ func Replication_info(user_gucs string, pgManager *PGManager) {
     row_count++
 
     if column1 != "GUC" {
-      //fmt.Println("| ",column1," | ",column2," | ",column3," |")
       output = output + "| " + column1 + " | " + column2 + " | " + column3 + " |\n"
     } else {
-      //fmt.Println("| ",column2," | ",column3," |")
       output = output + "| " + column2 + " | " + column3 + " |\n"
     }
   }
 
-/******** JPAREM FIXME 
-********* still doesnt work
-********* disabling this test while I try to understand 
-********* what's going on so I can actually fix it :-)
-
+  //FIXME
+/***********
   if row_count == 0 {
-     //row_count can be 0 if the postmaster died while we were running the
-     //query, and was alive just before, so the test/ping test was OK.
-     //
-     //so thats why we 1st try to ping again, and if it pings thats
-     //probably because user is not using a superuser connexion, and we will
-     //throw the error. 
-     // 
-     //if the postmaster doesnt ping, we will fall into it in the next
-     //iteration
-     //
-    
-     //sleep 1s to avoid pinging a dying server that may ping back
-     //while dying..
-     //JPAREM doesnt work..
-     time.Sleep(1 * time.Second)   
-
-     //test AGAIN connection
-	   err := pgManager.conn.Ping(context.Background())
-	   if err != nil {
-       fmt.Println("+ Failover or switchover in progress ?")
-       fmt.Println("+ Trying to reconnect every half-second for 20s max")
-		   err := pgManager.PGReconnectWithTimeout(pgReconnectTimeout,err)
-		   if err != nil {
-         exit1("Failed to reconnect:\n", err)
-	     }
-     } else {
-       //postmaster is alive.. so that's likely the user not using a Superuser
-       //connexion
-       message :=          "Appears the query returning Replication information from pg_stat_replication\n"
-       message = message + "is not returning the data expected. You may have not set a proper Superuser\n"
-       message = message + "(e.g. \"postgres\") connection settings in file : "
-       message = message + configfilename.value + "\n\n"
-       message = message + "If you think your config file is OK, then it's worth filing a bug on\n"
-       message = message + "https://github.com/CrunchyData/pgSimload/\n\n"
-       message = message + "Meanwhile, to avoid this error you can set Replication_info to \"\" (empty string)\n"
-       message = message + "in your Patroni config file : "
-       message = message + patroniconfigfilename.value
-       exit1(message,nil)
-     } 
+    //row_count can be 0 if the user to query pg_stat_replication doesn't have
+    //sufficient privileges to do so... likely, it's not a superuser set in
+    //the configuration.username 
+    message :=          "Appears the query returning Replication information is not returning\n" 
+    message = message + "the data expected. You may have not set a proper Superuser\n"
+    message = message + "(e.g. \"postgres\") connection setting in the file '"+ configfilename.value + "'\n\n"
+    message = message + "If you think your config file is OK, then it's worth filing a bug on\n"
+    message = message + "https://github.com/CrunchyData/pgSimload/\n\n"
+    message = message + "Meanwhile, to avoid this error you can set Replication_info to \"\" (empty string)\n"
+    message = message + "in your Patroni config file '"+ patroniconfigfilename.value+"'"
+    exit1(message,nil)
+  } else {
+    output = output + "+----------------------------------+---------------------------------------+----------------------------------+\n"
+    fmt.Println(output)
   }
-************/
+*********/
 
- 
-  output = output + "+----------------------------------+---------------------------------------+----------------------------------+\n"
-  //fmt.Println("+----------------------------------+---------------------------------------+----------------------------------+")
-  fmt.Println(output)
+  if row_count > 0 {
+    output = output + "+----------------------------------+---------------------------------------+----------------------------------+\n"
+    fmt.Println(output)
+  }
 
   rows.Close()
 
@@ -604,12 +564,15 @@ func PatroniWatch() {
   // ssh if not running in k8s
   // kubectl if running in k8s
   if patroni_config.K8s_selector == "" {
+
     //running remotely : ssh has to be present on this system
+/***********
     if _, err := os.Stat("/usr/bin/ssh"); os.IsNotExist(err) {
       message := "ssh is not present on this system. Please install it prior running"
       message = message + "\npgSimload in Patroni-loop mode against a remote host\n"
       exit1(message,err)
     }
+*********/
 
   } else {
     //running localy with kubectl

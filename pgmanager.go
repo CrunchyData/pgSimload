@@ -11,7 +11,11 @@ import (
     "errors"
 )
 
-// PGClientConfig represents the PostgreSQL client configuration.
+const (
+  pgReconnectTimeout = 20 * time.Second
+)
+
+// PGClientConfig represents the PostgreSQL client configuration
 type PGClientConfig struct {
   Hostname         string  `json:"Hostname"`
   Port             string  `json:"Port"`
@@ -23,13 +27,13 @@ type PGClientConfig struct {
 }
 
 
-// PGManager represents the PostgreSQL connection manager.
+// PGManager represents the PostgreSQL connection manager
 type PGManager struct {
 	conn   *pgx.Conn
 	Config *PGClientConfig
 }
 
-// NewPGManager creates a new PGManager instance with the given configuration.
+// NewPGManager creates a new PGManager instance with the given configuration
 func NewPGManager(configPath string) (*PGManager, error) {
 	config, err := loadConfig(configPath)
 	if err != nil {
@@ -58,7 +62,7 @@ func loadConfig(configPath string) (*PGClientConfig, error) {
 	return config, nil
 }
 
-// PGConnect establishes a new connection to the PostgreSQL database.
+// PGConnect establishes a new connection to the PostgreSQL database
 func (pm *PGManager) PGConnect() (*pgx.Conn, error) {
   connStr := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=%s application_name=%s", 
                           pm.Config.Hostname, pm.Config.Port, pm.Config.Database, pm.Config.Username, 
@@ -72,8 +76,9 @@ func (pm *PGManager) PGConnect() (*pgx.Conn, error) {
 	return conn, nil
 }
 
-// PGReconnectWithTimeout attempts to reconnect to the PostgreSQL database within a specified timeout.
+// PGReconnectWithTimeout attempts to reconnect to the PostgreSQL database within a specified timeout
 func (pm *PGManager) PGReconnectWithTimeout(timeout time.Duration, err error) error {
+
   var message string
 	startTime := time.Now()
 
@@ -82,45 +87,49 @@ func (pm *PGManager) PGReconnectWithTimeout(timeout time.Duration, err error) er
     var pgErr *pgconn.PgError
 
     if errors.As(err, &pgErr) {
-      //pgerr(err, pgErr,false)
       switch (pgErr.Code) {
         case "25P01","25P02","25P03","25006":
-          //fmt.Printf(  "\r[25...] PG server in recovery mode    : Actual downtime %d seconds             ", actual_downtime)
-          message = "PG server in recovery mode    "
+          message = "PG server in recovery mode            "
         case "28000", "28P01":
-          message = "Invalid auth                  "
+          message = "Invalid auth                          "
         case "57P01":
-           message = "PG terminated by admin cmd    "
+           message = "PG terminated by admin cmd           "
         case "57P02":
-           message = "PG crash shutdown             "
+           message = "PG crash shutdown                    "
         case "57P03":
-           message = "Cannot connect now            "
-        case "57P04":
-           message = "Database dropped              "
+           message = "Cannot connect now                   "
+        case "57P04": 
+           message = "Database dropped                     "
         case "57P05":
-           message = "Idle session timeout          "
+           message = "Idle session timeout                 "
         case "42601":
-           message = "Syntax error in SQL           "
+           message = "Syntax error in SQL                  "
         default:
-           message = "Other error from PG           "
+           message = "Other error from PG                  "
       }
 
       fmt.Print(string(colorRed))
-      fmt.Printf("\r[%s] %s : downtime %s                      ", pgErr.Code,message, time.Since(startTime).Truncate(time.Second).String())
+      if time.Since(startTime) < time.Second*1 {
+        fmt.Printf("\r[%s] %s", pgErr.Code,message)
+      } else {
+        fmt.Printf("\r[%s] %s (downtime: %s)", pgErr.Code,message, time.Since(startTime).Round(time.Millisecond).String())
+      }
       fmt.Print(string(colorReset))
 
     } else {
        fmt.Print(string(colorRed))
-       fmt.Printf("\rTry reconnecting to PostgreSQL         : downtime %s ", time.Since(startTime).Truncate(time.Second).String())
+       if time.Since(startTime) < time.Millisecond*300 {
+         fmt.Printf("\rReconnecting to PostgreSQL                          ")
+       } else {
+         fmt.Printf("\rReconnecting to PostgreSQL (downtime: %s)           ", time.Since(startTime).Round(time.Millisecond).String())
+       }
        fmt.Print(string(colorReset))
     }
  
-		//fmt.Println("Attempting to reconnect...")
-
 		err := pm.pgConnectWithRetry()
 		if err == nil {
       fmt.Print(string(colorGreen))
-			fmt.Printf("\nReconnected successfully after %s downtime", time.Since(startTime).Truncate(time.Second).String())
+			fmt.Printf("\nReconnected successfully after %s downtime\n", time.Since(startTime).Round(time.Millisecond).String())
       fmt.Print(string(colorReset))
 			return nil
 		}
@@ -128,7 +137,7 @@ func (pm *PGManager) PGReconnectWithTimeout(timeout time.Duration, err error) er
 		time.Sleep(500 * time.Millisecond)
 	}
 
-	return fmt.Errorf("failed to reconnect within %s", timeout)
+	return fmt.Errorf("Failed to reconnect within the %s timeout", timeout)
 }
 
 // pgConnectWithRetry tries to connect to the PostgreSQL database.

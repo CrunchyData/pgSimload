@@ -12,8 +12,10 @@ match real world usage scenarios.
 A `scenario.json` will be created with:
   - ID of the client
   - associated caption to show on screen 
-  - `config.json` associated file
-  - `script.sql` to be used in the loop
+  - `config.json` of that client
+  - `script.sql` of that client
+  - `session_parameters.json` of that client
+  - `create.json` of that client
   - `execution_number` parameter to configure how many times to execute the
     script (int64) (eg: 100)
   - `execution_time` parameter to configure how much time the Loop must be 
@@ -32,7 +34,7 @@ The `output_type` will allow (as a start?) the user to set wheter:
   - a nice output on screen with colored progress bars, ETAs, etc (one line
     per client)
 
-### More code cleaning
+### More code cleaning and simplification
 
 Because, heh, I'm a noob Go coder. Trying to do good, but I must admit it's a
 long way.

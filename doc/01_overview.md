@@ -4,14 +4,14 @@ Welcome to pgSimload !
 
 The actual version of the program is:
 
-**pgSimload version 1.0.2 - January, 11th 2024**
+**pgSimload version 1.0.3 - January, 15th 2024**
 
 pgSimload is a tool written in Go, and accepts 2 different modes of execution:
 
-  - **SQL-loop mode** to execute a script infintely on a given schema of a
+  - **SQL-Loop mode** to execute a script infintely on a given schema of a
     given database with a given user 
 
-  - **Patroni-monitoring mode** to execute a monitoring on a given Patroni
+  - **Patroni-Watcher mode** to execute a monitoring on a given Patroni
     cluster. So you need one of such for this mode to be useful to you
 
 Given the mode you choose, some parameters are mandatory or not. And the
@@ -29,8 +29,8 @@ This is very straightforward if you have Go installed on your system.
 You can run the tool with Go from the main directory of the project like:
 
 ```code
-$ go run main.go <parameters...>
-$ go run main.go -h
+$ go run . <parameters...>
+$ go run . -h
 ```
 
 ## Using binaries provided
@@ -40,8 +40,6 @@ the binaries provided in [bin/](https://github.com/CrunchyData/pgSimload/tree/ma
 
 If you want to build your own binary you can build it too, as described in the
 next paragraph.
-
-Note that Mac and Windows versions aren't fully tested at the moment.
 
 Feedback is welcome in any cases!
 
@@ -81,12 +79,14 @@ This tool can be used in different scenarios:
       `create.json` file. Look for examples on how to do that in the
       `examples/` directory. It should straightforward. That file is **not** 
       mandatory, as pgSimload need at least a `-config <file>` and a `-script
-      <file>` to run.
+      <file>` to run, in SQL-Loop mode.
 
     - the SQL script of your choice. For that purpose you create a plain 
-      SQL file, where you put everything you want in it. Beware the parsing
-      is really simple, it would probably fail when creating complex things
-      like functions in this script.
+      SQL file, where you put everything you want in it. It will be run in an
+      implicit transaction, and can contain multiple statements. If you want
+      details on how pgSimload runs those statements at once, please read 
+      chapter [Multiple Statements in a Simple Query](https://www.postgresql.org/docs/current/protocol-flow.html#PROTOCOL-FLOW-MULTI-STATEMENT) 
+      in the PostgreSQL's documentation.
 
     - you can set special parameters to the session like `SET
       synchronous_commit TO 'on'` or `SET work_mem TO '12MB'` if you want
@@ -117,14 +117,14 @@ This tool can be used in different scenarios:
     `postgres` user, because, on that mode, we use a special trick to get the
     primary's name, and this trick can only be done by a superuser in
     PostgreSQL (so it can be something else than `postgres`, if you set
-    another superuser)
+    another superuser).
 
   - so when testing a PostgreSQL cluster using Patroni, with multiple 
     hosts (a primary and a given number of replicas, synchronous or not),
     usually, pgSimload is run in 2 separate terminals, one to load data,
-    and the other, to monitor things in Patroni
+    and the other, to monitor things in Patroni.
 
-    - note the Patroni-monitoring mode can have added information thanks
+    - note the Patroni-Watcher mode can have added information thanks
       to the `Replication_info` set to `nogucs` or `<list of gucs separated by
       a comma` (e.g "synchronous_standby_names, synchronous_commit, work_mem") in
       the `patroni.json` config file passed as an argument to `-patroni
@@ -136,3 +136,4 @@ This tool can be used in different scenarios:
 
   - demo [Crunchy Postgres for Kubernetes](https://www.crunchydata.com/products/crunchy-postgresql-for-kubernetes), a fully Open Source based PostgreSQL 
     distribution to run production workloads in Kubernetes
+

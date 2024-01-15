@@ -4,8 +4,8 @@ import (
   "context"
 	"fmt"
   "flag"
-  "io/ioutil"
   "github.com/MakeNowJust/heredoc"
+  "os"
 )
 
 var (
@@ -96,7 +96,11 @@ func gatherGucs () {
 
   rows.Close()
  
-	err = ioutil.WriteFile(gathergucsfilename.value, []byte(file), 0644)
+	err = os.WriteFile(gathergucsfilename.value, []byte(file), 0644)
+
+  if err != nil {
+		exit1("Error while trying to write file "+gathergucsfilename.value,err)
+	}
 
   fmt.Print(string(colorGreen))
   fmt.Println("Session parameters template file created !")

@@ -14,7 +14,7 @@ All flags are optional and intended to run alone.
 | `license` | Shows license                        |
 | `version` | Shows current version of pgSimload   |
 
-## SQL-loop mode : parameters
+## SQL-Loop mode : parameters
 
 | Name           |  Mandatory         | Optional           | Value expected  | Description                                   |
 | :---           |    :-----:         |  :----:            |  :---:          |    :----                                      |
@@ -23,7 +23,7 @@ All flags are optional and intended to run alone.
 | `script`       | **X**              |                    | SQL text file   | Sets the script to run inside the loop        |
 | `session_parameters` |                    | **X**              | JSON file       | Sets special session configuration parameters |
 
-## Patroni-monitoring mode : parameters
+## Patroni-Watcher mode : parameters
 
 | Name       |  Mandatory         | Optional           | Value expected  | Description                                  |
 | :---       |    :-----:         |  :----:            |  :---:          |    :----                                     |
@@ -43,9 +43,9 @@ All flags and parameters can be listed executing `pgSimload -h`.
 
 There are 2 different modes when executing `pgSimload`:
   
-  - **SQL-loop mode** to execute a script infintely on a given schema of a
+  - **SQL-Loop mode** to execute a script infintely on a given schema of a
     given database
-  - **Patroni-monitoring mode** to execute a monitoring on a given Patroni
+  - **Patroni-Watcher mode** to execute a monitoring on a given Patroni
     cluster. So you need one of such for this mode to be useful to you
 
 Given the mode you choose, some parameters are mandatory or not. And the
@@ -57,11 +57,11 @@ those first.
 ## Common flags and parameters
 
 ### **config** (JSON file) [MANDATORY]
-\
-In the **SQL-loop mode** the "Username" set in the `config.json` can be any
+
+In the **SQL-Loop mode** the "Username" set in the `config.json` can be any
 PostgreSQL user.
 
-In the **Patroni-monitoring mode** the "Username" set in the `config.json`
+In the **Patroni-Watcher mode** the "Username" set in the `config.json`
 **has to be a superuser** in PostgreSQL, typically "postgres". Because we use
 special tricks to get the `hostname` of the PostgreSQL primary server.
 
@@ -90,14 +90,14 @@ Most common values would be there either `disable` for non-SSL connexion or
 `require` for SSL ones.
 
 ### **contact** (flag) [OPTIONAL]
-\
+
 Executing with only `-contact` will show you where you can contact the
 programmer of the tool. 
 
 This flag is not supposed to be run with other parameters or flags.
 
 ### **help** (flag) [OPTIONAL]
-\
+
 Originally, "heredocs" were used in the main program to show this help, but it
 became too big to do such, it's better to have that doc in the current format
 you're reading, makes the source code lighter and that's cleaner IMHO.
@@ -109,7 +109,7 @@ you executed that flag...or that you find it by yourself. Kudos :-)
 This flag is not supposed to be run with other parameters or flags.
 
 ### **license** (flag) [OPTIONAL]
-\
+
 Executing with only `-license` will show you the license of this tool,
 currently licensed under The PostgreSQL License.
 
@@ -119,29 +119,29 @@ directory, in a file named `LICENCE.md`.
 This flag is not supposed to be run with other parameters or flags.
 
 ### **version** (flag) [OPTIONAL]
-\
+
 Executing with only `-version` will show you the current version of pgSimload.
 This is intended for general information of the users and also for any further
 packager of the tool in various systems. 
 
 Not supposed to be run with other parameters. No need to add a value to that flag.
 
-## SQL-loop mode parameters
-\
+## SQL-Loop mode parameters
+
 The `config` flag is not listed down there, but is still **mandatory** to run
 in this mode, please read carefully informations upper in this documentation.
 On this mode, no particular "Username" has to be set in the `config.json`
 file.
 
 ### **create** (JSON text file) [OPTIONAL]
-\
+
 If you need to create tables, or do anything prior to the execution of the
 main loop, you have to put your SQL commands in this JSON text file.
 
 This script will be run only once prior the main loop on the `script`
 described above.
 
-If you're want to execute pgSimload in SQL-loop mode on an existing database,
+If you're want to execute pgSimload in SQL-Loop mode on an existing database,
 on which you've adapted the SQL present in the `script`, then you don't need
 this feature. That's why it is optional.
 
@@ -150,29 +150,28 @@ To have a better idea of what's expected here, please refer to
 files.
 
 ### **script** (SQL text file) [MANDATORY]
-\
+
 This file is in plain text and contains SQL statements to run, in the main
-loop of pgSimpload in the "SQL-loop mode".         
+loop of pgSimpload in the "SQL-Loop mode".         
 
 It can be as simple as a "SELECT 1;". Or much more complex with SQL SQL
-statements of your choice separated by newlines. As an example of a more
-complicated example see `examples/PG_15_Merge_command/script.sql`.
+statements of your choice separated by semi-colon and newlines. As an example
+of a more complicated example see `examples/PG_15_Merge_command/script.sql`.
 
-Warning, as per version 0.6, the parsing is very basic for this script : each
-SQL statement is separated with `;\n`, so, this doesn't fit complex usages.
-
-So consider limiting the content of those files with simple SQL commands, and
-not creating functions or other more complex things. If you need to create
-prior functions, do that with `psql ... < create.sql` prior to run pgSimload.
+It will run the querie(s) "all at once" in an implicit transaction. For more
+details on how it works, please read chapter
+[Multiple Statements in a Simple
+Query](https://www.postgresql.org/docs/current/protocol-flow.html#PROTOCOL-FLOW-MULTI-STATEMENT)
+in the PostgreSQL's documentation.
 
 ### **session_parameters** (JSON text file) [OPTIONAL]
-\
+
 This parameter lets you tweak the PostgreSQL configuration that can be
 specified in a session. This can be everything your PostgreSQL version
 allows, and we let you define proper values for proper parameters.
 
 Every parameter you specify here will be passed at the beginning of the
-session when the SQL-loop is executed. So everything will be executed
+session when the SQL-Loop is executed. So everything will be executed
 accordingly to those parameters in that session.
 
 As an example, you can tweak `work_mem` in a session, or `synchronous_commit`,
@@ -228,7 +227,7 @@ The following Session Parameters are set:
 
 
 Now entering the main loop, executing script "./examples/testdb/script.sql"
-Script statements succeeded   : |00000060|   
+Script executions succeeded :        60
 ```
 
 ... that's because you have probably a error in the JSON file, or maybe you
@@ -238,17 +237,16 @@ here is valid, like given in the example file given in
 `examples/testdb/session_parameters.json`
 
 
-## Patroni-monitoring mode flag and parameters
+## Patroni-Watcher mode flag and parameters
 
-To use have pgSimload act as a small Patroni-monitoring tool in a side
-terminal, all you have to do is to create a `patroni.json` file in the
-following format. Note that the name doesn't matter much, you can name the way
-you want.
+To use have pgSimload act as a Patroni-Watcher tool in a side terminal, all
+you have to do is to create a `patroni.json` file in the following format.
+Note that the name doesn't matter much, you can name the way you want.
 
 ### **patroni** (value) [MANDATORY]
-\
+
 When this paramter is set (`-patroni <patroni.json>`), you're asking pgSimload
-to run in Patroni-monitoring mode. This parameter is used to give to the tool
+to run in Patroni-Watcher mode. This parameter is used to give to the tool
 the relative or complete path to a JSON file formated like the following
 (note: you can find a copy of this file in `examples/patroni_monitoring/`:
 
@@ -365,7 +363,7 @@ You can look at examples given at `examples/patroni_monitoring/`.
 
 **Watch_timer**
 
-You can ask for the output in the Patroni-monitoring mode to be like a bash
+You can ask for the output in the Patroni-Watcher mode to be like a bash
 "watch" command: it will run every `x` seconds you define here.
 
 If you want the tool to issue commands each 5 seconds, then set this parameter
@@ -376,7 +374,7 @@ tool will iterate a bit before going the closest possible to your match your
 request.
 
 If the value is less than 1, pgSimload will assume you only want to run it
-once in the Patroni watcher mode.
+once in the Patroni-Watcher mode.
 
 **Format**
 
@@ -403,11 +401,11 @@ pod/hippo-instance1-mr6g-0
 
 So pgSimload knows the pod where the Primary PostgreSQL server is running.
 
-The usage of pgSimload in "Patroni monitoring mode" in Kubernetes **has
-requirements**, we urge you to read carrefully the documentation you can access
-at `examples/patroni_monitoring/README.md` !
+The usage of pgSimload in Patroni-Watcher mode in Kubernetes **has
+requirements**, we urge you to read carrefully the documentation you can
+access at `examples/patroni_monitoring/README.md` !
 
-In short, if the Patroni monitoring mode has to be executed on a cluster of
+In short, if the Patroni-Watcher mode has to be executed on a cluster of
 PostgreSQL servers in Patroni, the only relevant paramters in the patroni.json
 file would then be:
 
@@ -466,5 +464,4 @@ once to have every parameter in the generated template, then you edit it to
 remove all uncessary parameters. You'll have then your own template you can
 use in different scenarios, creating as many `session_parameters.json` you
 need, to be tested.
-
 

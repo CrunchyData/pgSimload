@@ -253,29 +253,13 @@ func Replication_info(user_gucs string, pgManager *PGManager) {
     }
   }
 
-  //FIXME
-/***********
-  if row_count == 0 {
-    //row_count can be 0 if the user to query pg_stat_replication doesn't have
-    //sufficient privileges to do so... likely, it's not a superuser set in
-    //the configuration.username 
-    message :=          "Appears the query returning Replication information is not returning\n" 
-    message = message + "the data expected. You may have not set a proper Superuser\n"
-    message = message + "(e.g. \"postgres\") connection setting in the file '"+ configfilename.value + "'\n\n"
-    message = message + "If you think your config file is OK, then it's worth filing a bug on\n"
-    message = message + "https://github.com/CrunchyData/pgSimload/\n\n"
-    message = message + "Meanwhile, to avoid this error you can set Replication_info to \"\" (empty string)\n"
-    message = message + "in your Patroni config file '"+ patroniconfigfilename.value+"'"
-    exit1(message,nil)
-  } else {
-    output = output + "+----------------------------------+---------------------------------------+----------------------------------+\n"
-    fmt.Println(output)
-  }
-*********/
-
   if row_count > 0 {
     output = output + "+----------------------------------+---------------------------------------+----------------------------------+\n"
     fmt.Println(output)
+  } else { 
+      fmt.Print(string(colorRed))
+      fmt.Printf("\nPostgreSQL not responding... Probable failover in progress ?...\n")
+      fmt.Print(string(colorReset))
   }
 
   rows.Close()
@@ -560,21 +544,9 @@ func PatroniWatch() {
   //default mode
   mode := "ssh"
 
-  //check if presence of required binaries on the host are present
-  // ssh if not running in k8s
-  // kubectl if running in k8s
-  if patroni_config.K8s_selector == "" {
-
-    //running remotely : ssh has to be present on this system
-/***********
-    if _, err := os.Stat("/usr/bin/ssh"); os.IsNotExist(err) {
-      message := "ssh is not present on this system. Please install it prior running"
-      message = message + "\npgSimload in Patroni-loop mode against a remote host\n"
-      exit1(message,err)
-    }
-*********/
-
-  } else {
+  //check if presence of required binary kubectl on the host
+  //ssh binary not necessary, handled by golang directly
+  if patroni_config.K8s_selector != "" {
     //running localy with kubectl
     if _, err := os.Stat("/usr/bin/kubectl"); os.IsNotExist(err) {
       message := "kubectl is not present on this system. Please install it prior running"

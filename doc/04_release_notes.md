@@ -1,14 +1,14 @@
 # Release notes
 
-## Version 1.0.3 (Current dev)
+## Version 1.0.3 (January 15th 2024)
 
 ### Major changes
 
-- don't ping the server in between operations, but only do that **on error** 
-  to check that the server is living or not. If not, try reconnecting as
-  before... I used the right method for 1.0.2.. but at the wrong place. Sorry,
-  this was eating useless performances! (ping roundtrip >> query exec in most
-  scenarios..)
+- In SQL Loop mode, don't ping the server in between operations, but only do
+  that **on error** to check that the server is living or not. If not, try
+  reconnecting as before... I used the right method for 1.0.2.. but at the wrong
+  place. Sorry, this was eating useless performances! (ping roundtrip >> query
+  exec in most scenarios..)
 
 - don't parse `script.sql`. It's useless because Exec() handles multiple
   queries on a same file. And it does implicit transactions (so need to add
@@ -17,12 +17,14 @@
 
 ### Minor changes
 
-**TODO**
+- `ioutils` usage replaced with `os`, because `ioutils` is deprecated. 
+   So `ioutils` is removed everywhere too
+
+- removed `Read_Config()` function in `main.go` : not used anymore
 
 - review doc to state the major change around parsing/execution 
-- fix rowcount == 0 in patroni.go / Replication info
 
-**DONE**
+- fix rowcount == 0 in patroni.go / Replication info
 
 - removed the test that looks for `ssh` binary locally, because what is is
   used is `sshManager.RunCommand(remote_command)`
@@ -45,7 +47,6 @@
 
 - `github.com/jackc/pgx/v5` package no more needed in `patroni.go`
 
-
 - changed "Statements" by "Scripts" in summary and loop info, because it's no
   more statements, it's the *whole* script that it is Exec() at once !
 
@@ -59,7 +60,7 @@
 
 - corrected paragraph ordering in `doc/05_roadmap.md`
 
-## Version 1.0.2 (January 11th 2023)
+## Version 1.0.2 (January 11th 2024)
 
 - split main.go in many other .go files for better
   maintenability. This will allow usage of Go Packages further more easily 
@@ -75,10 +76,10 @@
 Same I did in version 1.0.1 with SSHManager, now PG connections are handled
 by a manager. First, this bring cleaner code. Second, it allows pgSimload to
 function with an unique connection to the PG database, wheter it is used in
-SQL-Loop mode or Patroni Watcher mode. It doesn't change dramatically things
+SQL-Loop mode or Patroni-Watcher mode. It doesn't change dramatically things
 in the SQL-Loop mode, because previously, an unique connection was used in the
 main loop (but others to set transactions GUCS, if used, and Exectute script
-if used, where still independant connections). But for the Patroni Watcher, it
+if used, where still independant connections). But for the Patroni-Watcher, it
 changes things a lot, allowing the Replication info output to be faster, and
 offers less "flickering", because we don't pay anymore the connexion time,
 which has the most cost in time execution.
@@ -87,11 +88,11 @@ which has the most cost in time execution.
 
 ## Version 1.0.1 (January, 8th 2024)
 
-- new SSHManager for Patroni Watched mode
+- new SSHManager for Patroni-Watcher mode
 
-The way the Patroni watcher is handled in SSH (i.e not in Kubernetes modes)
+The way the Patroni-Watcher is handled in SSH (i.e not in Kubernetes modes)
 has been refactored. Previously, an SSH connection was initiated at each loop
-of the Patroni watcher. This was not very efficient, because at each
+of the Patroni-Watcher. This was not very efficient, because at each
 `Watch_timer` an SSH connection was opened, the `patronictl` command
 initiated, the output shown, then the SSH connection was closed.
 

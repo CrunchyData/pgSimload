@@ -5,10 +5,8 @@ import (
   "flag"
 	"os"
 	"github.com/eiannone/keyboard"
-  "encoding/json"
   "github.com/MakeNowJust/heredoc"
 )
-//"io/ioutil"
 
 const (
 	colorReset  = "\033[0m"
@@ -31,8 +29,7 @@ var (
   createfilename            stringFlag
   scriptfilename            stringFlag
 
-  //Version = "pgSimLoad v.1.0.3 - January xxth 2023"
-  Version = "pgSimLoad v.1.0.3 - **DEV**"
+  Version = "pgSimLoad v.1.0.3 - January 15th 2024"
 
   License = heredoc.Doc(`
 **The PostgreSQL License**
@@ -144,7 +141,7 @@ func CheckFlags () {
 
   if *help {
 		_ = keyboard.Close()
-    fmt.Println("Please read documentation in doc/README.md");
+    fmt.Println("Please read documentation in doc/\nAlternatively, run with -h to show all possible parameters.");
     os.Exit(0);
   } 
 
@@ -161,43 +158,19 @@ func CheckFlags () {
   } 
 
   if !patroniconfigfilename.set {
-    
-    if (!configfilename.set || !scriptfilename.set) {
-      fmt.Print(string(colorRed))
-      fmt.Println("You miss one parameter to run pgSimLoad properly in SQL-loop mode:")
-
-      message := "Please read documentation in doc/README.md"
+   
+      message := "Please read documentation in doc/ since parameters have to be passed"
+      message = message + "\nAlternatively, run with -h to show all possible parameters"
  
       if !configfilename.set {
-        exit1("-config is not set !\n"+message,nil)
+        exit1(message + "\n  -config is not set !",nil)
       }
 
       if !scriptfilename.set {
-        exit1("-script is not set !\n"+message,nil)
+        exit1(message + "\n  -script is not set !",nil)
       }
-    } 
   }
 
-}
-
-// function ReadConfig() to
-// read config.json to get database credentials 
-// returns an string formated enough to connect to PostgreSQL
-func ReadConfig() string {
-  flag.Parse()
-  file, _ := os.Open(configfilename.value)
-  defer file.Close()
-  decoder := json.NewDecoder(file)
-  configuration := Config{}
-  err := decoder.Decode(&configuration)
-  if err != nil {
-    message := "Error while parsing the JSON file provided in -config "
-    message = message + configfilename.value + ":\n"
-    exit1(message,err)
-  }
-  //going with URI like this works better with TLS environments,
-  conn_uri := "postgresql://"+configuration.Username+":"+configuration.Password+"@"+configuration.Hostname+":"+configuration.Port+"/"+configuration.Database+"?application_name="+configuration.ApplicationName
-  return conn_uri
 }
 
 func start_banner (mode string) {

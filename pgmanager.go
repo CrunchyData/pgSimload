@@ -64,10 +64,13 @@ func loadConfig(configPath string) (*PGClientConfig, error) {
 
 // PGConnect establishes a new connection to the PostgreSQL database
 func (pm *PGManager) PGConnect() (*pgx.Conn, error) {
+
   connStr := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=%s application_name=%s", 
                           pm.Config.Hostname, pm.Config.Port, pm.Config.Database, pm.Config.Username, 
                           pm.Config.Password, pm.Config.Sslmode, pm.Config.ApplicationName)
+
 	conn, err := pgx.Connect(context.Background(), connStr)
+
 	if err != nil {
 		return nil, err
 	}

@@ -1,7 +1,7 @@
 # Patroni monitoring examples
 
-The "Patroni-monitoring mode" requires at least one configuration file, the one
-you pass in the parameter `-patroni <patroni.json>` file.
+The Patroni-Watcher mode requires at least one configuration file, the one you
+pass in the parameter `-patroni <patroni.json>` file.
 
 If you want special extra informations taken mostly from `pg_stat_replication`
 table, then you'll need also a configuration file for the connexion to the
@@ -110,7 +110,7 @@ want to do!
 
 ## Usage in Kubernetes
 
-The Patroni monitoring can also work in Kubernetes !
+The Patroni-Watcher can also work in Kubernetes !
 
 There are **requirements** for that special usage to run OK:
 
@@ -135,7 +135,7 @@ So the `patroni.json` will be then very different in terms of values:
 {
     "Cluster"          : "", 
     "Remote_host"      : "",
-    "Remote_port"      : 22,
+    "Remote_port"      : "",
     "Remote_user"      : "",
     "Use_sudo"         : "",
     "Ssh_private_key"  : "",

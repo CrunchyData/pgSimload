@@ -6,7 +6,6 @@ import (
   "flag"
 	"os"
   "time"
-  "io/ioutil"
 	"github.com/eiannone/keyboard"
   "encoding/json"
 )
@@ -45,7 +44,7 @@ func ExecCreate(pgManager *PGManager) {
   // Open our create.json script with DDLs to run prior
   // to loop on excuting script.sql queries
   create_ddl_file, err := os.Open(createfilename.value)
-  
+
   // if we os.Open returns an error then handle it
   if err != nil {
 	  exit1("Could not open DDL script:\n" , err)
@@ -56,8 +55,21 @@ func ExecCreate(pgManager *PGManager) {
   // defer the closing of our jsonFile so that we can parse it later on
   defer create_ddl_file.Close()
 
-  // read our opened xmlFile as a byte array.
-  byteValue, _ := ioutil.ReadAll(create_ddl_file)
+  // get the file size
+  create_ddl_file_stat, err := create_ddl_file.Stat()
+  
+  if err != nil {
+		fmt.Println("Error getting ddl script size information:", err)
+	  exit1("Error getting file size information:\n" , err)
+	}
+
+  // read the file as a byte slice (array)
+  byteValue := make([]byte, create_ddl_file_stat.Size())
+
+	_, err = create_ddl_file.Read(byteValue)
+	if err != nil {
+    exit1("Error reading ddl script file:\n", err)
+	}
 
   // we initialize our Queries array
   var q Queries
@@ -108,15 +120,27 @@ func SetSessionParameters(pgManager *PGManager) {
     exit1("Could not open session parmeters GUCs file:\n", err)
   }
 
-  fmt.Println("The following Session Parameters are set:")
-
   // defer the closing of our jsonFile so that we can parse it later on
   defer gucs_parameters_file.Close()
 
-  // read our opened xmlFile as a byte array.
-  byteValue, _ := ioutil.ReadAll(gucs_parameters_file)
+  // get the file size
+  gucs_parameters_file_stat, err := gucs_parameters_file.Stat()
 
-  // we initialize our SessionParameters array
+  if err != nil {
+    exit1("Error getting GUCS parameters file size information:\n" , err)
+  }
+
+  // read the file as a byte slice (array)
+  byteValue := make([]byte, gucs_parameters_file_stat.Size())
+
+  _, err = gucs_parameters_file.Read(byteValue)
+  if err != nil {
+    exit1("Error reading GUCS parameters file:\n", err)
+  }
+
+  fmt.Println("The following Session Parameters are set:")
+
+  // we initialize our SessionParameters GUCS parameters  q SessionParameters
   var q SessionParameters
 
   // we unmarshal our byteArray which contains our
@@ -148,16 +172,13 @@ func SetSessionParameters(pgManager *PGManager) {
 func do_sqlloop(pgManager *PGManager) {
 
   // read script.sql
-  script_file, err := ioutil.ReadFile(scriptfilename.value)
+  script_file, err := os.ReadFile(scriptfilename.value)
 
   if err != nil {
     exit1("Could not read script file:\n" , err)
   }
-
+ 
   statements := string(script_file)
-
-  //DEBUG
-  //exit1(string(script_file),nil)
 
   //test script once to ensure there's no errors in it
   bad_script := 0
@@ -332,15 +353,21 @@ func SQLLoop () {
   if err != nil {
     exit1("Failed to create PGManager:\n", err)
   }
+ 
+  //DEBUG 
+  //fmt.Println("DEBUG: Created a new PGManager")
 
   // Initial connection
   conn, err := pgManager.PGConnect()
   if err != nil {
-    //we won't try to reconnect here since the loop 
-    //did not started yet
+    // we won't try to reconnect here since the loop 
+    // did not started yet
     exit1("Failed to connect to PostgreSQL:\n", err)
   }
+
   defer conn.Close(context.Background())
+
+  //fmt.Println("DEBUG: Connected to PG!")
 
   if sessiongucsfilename.set {
     SetSessionParameters(pgManager)

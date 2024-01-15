@@ -23,17 +23,6 @@ Here's something for the user to understand:
 
  - `script.two_liner.sql` contains the same, but each command on one line.
 
-When you pass one or the other in the `-script <script.sql>` parameter, you'll 
-see the difference in counting "statements": actually, pgSimload counts
-statements as one per line, because the parsing method for the `-script
-<script.sql>` thing is very basic.
-
-We did tests with a JSON version of it like `-script <script.json>` : it adds
-an overhead and makes everything unreadable in the end. And pgSimload is not
-designed to have "exact" parameters and results, the thing is having "some
-data", and watch differences in between different configurations of PG
-infrastructure, or parameters (GUCS), etc.
-
 Once pgSimload has been compiled **and** the `config.json` adapted to suit
 your needs, this could be used as simple as:
 
@@ -71,8 +60,7 @@ $ pgSimload -config config.json -create create.json -script script.sql
 ```
 
 The `watcher.sh` is a plain psql into watch to get some live stats on the
-database. You may have to adapt it to match your usage. We've added 2
-flavours.
+database. You may have to adapt it to match your usage. I've added 2 flavours.
 
 The first show some data, nice to have in a separate terminal (use
 [tilix](https://gnunn1.github.io/tilix-web/) while you demo!):
@@ -98,15 +86,20 @@ This is another example that shows one can:
  - create multiple different `script.sql`, `insert.sql`, etc.. to pass to the
    parameter `-create`
 
+Obviously, that `delete from test.data;` is just for the example, if you
+really want to delete all data from a table, in the real world, you need to
+use [truncate
+data](https://www.postgresql.org/docs/current/sql-truncate.html)!
+
 If you have a PostgreSQL *cluster* where you want to test as an example:
 
  - write activity to the primary and
  - read activity to the secondary
 
 Then you'll need 2 different files for credentials one to your primary, on
-let's say port 5432, another one to your secondary (or pool of secondaries, if you're using
-`pgBouncer` on a different port, or just `HAProxy` or anything else to balance
-to different PostgreSQL replicas, on let's say, port 5433).
+let's say port 5432, another one to your secondary (or pool of secondaries, if
+you're using `pgBouncer` on a different port, or just `HAProxy` or anything
+else to balance to different PostgreSQL replicas, on let's say, port 5433).
 
 You'll need also 2 different SQL script files to run read/write operations on
 the primary, and obviously, read/only operations to the secondary (or group of
@@ -121,3 +114,4 @@ name that like you want), as for you to use the special `-session_parameters
 in which the script.sql queries will exectute. You can use this to set special
 values to a lot of configuration parameters that PostgreSQL allows to change
 within a session. As an example: `work_mem`, `synchronous_commit`, etc.
+

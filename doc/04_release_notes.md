@@ -1,5 +1,40 @@
 # Release notes
 
+## Version 1.1.0 (January 20th 2024)
+
+### Major changes
+
+- Added 2 new parameters to pgSimload command line to be used in SQL-Loop
+  mode:
+
+  - `-loops <int64>` will limit the SQL-Loop execution to that exact number
+    of loops. This can be used to avoid running SQL-Loop endlessly, and/or 
+    in comparisons scenarios when one wants to compare effects of various 
+    configurations parameters, including using different values when a 
+    session parameters files is used (see `session_parameters <JSON.file>` 
+    in docs) 
+
+  - `-time time.Duration` (where Duration is a duration, without or with
+    double or sigle quotes, like "10s" or 1m10s or '1h15m30s'...). This option
+    will limit SQL-Loop execution to that amount of time. It can be used in 
+    various scenarios too
+
+  - when both are used at the same time, the SQL-Loop ends when any one of
+    those conditions is satisfied
+
+- documentation update to describe the new `-loops` and `-time` parameters to
+  be used in SQL-Loop mode  
+
+### Minor changes
+
+- updated Crunchy copyright ranges to include 2024 (patch by @youattd)
+
+- updated `examples/simple` examples and README file
+
+- updated `examples/patroni_monitoring/README.md` doc to mention the
+
+- added scripts in `examples/patroni_monitoring/ha_test_tools`
+
 ## Version 1.0.3 (January 15th 2024)
 
 ### Major changes

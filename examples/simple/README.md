@@ -11,28 +11,37 @@ No creation of tables and others are needed, so there's no need to call for
 `-create <create.json>` or such. pgSimload accepts the omission of parameter
 `-create`.
 
-Here's something for the user to understand:
+This is the most simple example, and here you learn how you can eventually add
+a wait in your loops,:
 
- - `script.one_liner.sql` contains a simple "select 1;" with a sleep(1) 
-   **on the same line**, where
+ - `script.one.sql` contains a simple "select 1;"
 
- - `script.two_liner.sql` contains the same, but each command on one line.
-
-When you pass one or the other in the `-script <script.sql>` parameter, you'll
-see the difference in counting "statements": actually, pgSimload counts
-statements as one per line, because the parsing method for the `-script
-<script.sql>` thing is very basic.
-
-I did tests with a JSON version of it like `-script <script.json>` : it adds
-an overhead and makes everything unreadable in the end. And pgSimload is not
-designed to have "exact" parameters and results, the thing is having "some
-data", and watch differences in between different configurations of PG
-infrastructure, or parameters (GUCS), etc.
+ - `script.two.sql` contains the same, but with a sleep(1) added
 
 Once pgSimload has been compiled **and** the `config.json` adapted to suit
 your needs, this could be used as simple as:
 
 ```code
-$ pgSimload -config config.json -script script.one_liner.sql
-$ pgSimload -config config.json -script script.two_liner.sql
+$ pgSimload -config config.json -script script.one.sql
+$ pgSimload -config config.json -script script.two.sql
+```
+
+If you want to limit the number of loops, you can do that as simply as 
+
+```code
+$ pgSimload -config config.json -script script.one.sql -loops 10
+```
+
+Alternatively, you can limit the execution time, setting a duration:
+
+```code
+$ pgSimload -config config.json -script script.one.sql -time 5s
+```
+
+And finally, you can do both at the same time. Whichever happens first will
+break the SQL-Loop:
+
+```code
+$ pgSimload -config config.json -script script.one.sql -time 1s -loops 20
+$ pgSimload -config config.json -script script.one.sql -time 10s -loops 20
 ```

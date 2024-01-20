@@ -8,6 +8,9 @@ table, then you'll need also a configuration file for the connexion to the
 database. This connexion has to be executed with a superuser in PostgreSQL,
 aka `postgres` user (or any superuser in PostgreSQL you defined).
 
+If you want to test your PostgreSQL HA you can use the tools provided see
+bottom of this file.
+
 
 ## Usage in localhost/baremetal/VMs...
 
@@ -188,3 +191,24 @@ So the `config.json` should then be like:
     "ApplicationName" : "pgSimload"
 }
 ```
+
+## Some tools to test HA
+
+So you want to test HA? 
+
+On bare metal or VMs, that could be as simple as issuing an `rm -rf` in your
+$PGDATA directory, and see what happens.
+
+On Kubernetes, same thing can be done by deleting the StatefulSet of the
+primary PostgreSQL pod.
+
+You can achieve that by looking at the `ha_test_tools/kill_on_k8s.sh` bash
+script. You may have to edit it to configure it to suit your needs.
+
+Those operations can be done while pgSimload runs in 2 terminals, one in the
+SQL-Loop mode and the other one in the Patroni-mode. It will help you
+understand (or demo) how your PostgreSQL HA cluster behaves. 
+
+There is also a script `ha_test_tools/kill_pgSimload_sessions.sh` that allows
+you to kill the PostgreSQL sessions of the pgSimload application so you can
+test the fail/retry mechanism built in pgSimload.

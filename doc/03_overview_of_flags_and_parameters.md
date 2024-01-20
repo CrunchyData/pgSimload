@@ -22,6 +22,9 @@ All flags are optional and intended to run alone.
 | `create`       |                    | **X**              | JSON file       | Sets the SQL DDL to run once prior main loop  |
 | `script`       | **X**              |                    | SQL text file   | Sets the script to run inside the loop        |
 | `session_parameters` |                    | **X**              | JSON file       | Sets special session configuration parameters |
+| `loops`        |                    | **X**              | integer         | Sets the number of loops to execute before exiting  |
+| `time`         |                    | **X**              | duration        | Sets the total execution time before exiting |
+
 
 ## Patroni-Watcher mode : parameters
 
@@ -236,6 +239,78 @@ pgSimload to have such keyword there. It is also expected that your JSON file
 here is valid, like given in the example file given in 
 `examples/testdb/session_parameters.json`
 
+### **loops** (integer64) [OPTIONAL]
+
+This parameter was added in version 1.1.0. 
+
+It allows one to limit the number of times the SQL-Loop will be run.
+
+As an example, passing the `-loops 10` parameter to your `pgSimload` command
+line will give you the following (extract of) output:
+
+```code
+[...]
+Now entering the main loop, executing script "light.sql"
+
+Number of loops will be limited:
+    10 executions
+Script executions succeeded :         10                               
+=========================================================================
+Summary
+=========================================================================
+Script executions succeeded :         10 (9.561 scripts/second)
+Total exec time             :     1.045s
+=========================================================================
+```
+
+This parameter can be used in conjuction with the `-time` parameter below.
+Whichever is satisfied first will end the SQL-Loop.
+
+### **time** (duration) [OPTIONAL]
+
+This parameter was added in version 1.1.0. 
+
+It allows one to limit the execution time of the SQL-Loop.
+
+The value has to be one of "duration", that is expressed with or without
+simple or double quotes, so all the following values are valid:
+
+  - 10s for ten seconds
+  - "1m30s" for one minute and thirty seconds
+  - '1h15m4s" for one hour fifteen minutes and four seconds
+
+Note that GoLang's Time package limits duration units to the following list,
+you can use to pass the duration you want:
+
+  - "ns" for nanoseconds 
+  - "us" (or "µs") for microseconds
+  - "ms" for milliseconds
+  - "s" for seconds
+  - "m" for minutes
+  - "h" for hours
+
+I hardly can believe you'd ever want pgSimload to run for days, months, year..
+Don't you?
+
+As an example passing the `-time 10s` parameter to your `pgSimload` command
+line will give you the following (extract of) output:
+
+```code
+Now entering the main loop, executing script "light.sql"
+
+Number of loops will be limited:
+    "10s" maximum duration
+Script executions succeeded :         90                               
+=========================================================================
+Summary
+=========================================================================
+Script executions succeeded :         90 (8.907 scripts/second)
+Total exec time             :    10.104s
+=========================================================================
+```
+
+This parameter can be used in conjuction with the `-loops` parameter seen in
+the previous paragraph. Whichever is satisfied first will end the SQL-Loop.
 
 ## Patroni-Watcher mode flag and parameters
 

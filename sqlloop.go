@@ -200,11 +200,30 @@ func do_sqlloop(pgManager *PGManager) {
   } else {
 	  fmt.Println()
     fmt.Printf("Now entering the main loop, executing script %q\n",scriptfilename.value) 
+
+    if exec_loops !=0 || exec_time !=0 {
+      fmt.Printf("\nNumber of loops will be limited:\n")
+
+      if exec_loops != 0 {
+        fmt.Printf("    %d executions", exec_loops) 
+      } 
+
+      if exec_time != 0 {
+        if exec_loops !=0 {
+          fmt.Printf(" or\n    %q maximum duration\n", exec_time)
+          fmt.Printf("Whichever happens first\n")
+        } else {
+          fmt.Printf("    %q maximum duration\n", exec_time)
+        }
+      } else {
+        fmt.Println()
+      } 
+    }
   }
 
   //store Time when we started the loop
   total_start_time = time.Now()
-	
+
   // MAIN loop on SQL content of script.sql
 	// This is to be able to stop the loop on <Esc> key
 	stopCh := make(chan bool)
@@ -220,6 +239,17 @@ func do_sqlloop(pgManager *PGManager) {
 			}
 		}
 	}()
+
+  //if user has set a --time "duration" parameter we start a "timer"
+  //of that amount of time. This one will send "true" to stopCh once 
+  //dead so it will break the loop  
+  //basically, it's just to Sleep for exec_time duration..
+  go func() {
+    if exec_time != 0 {
+      time.Sleep(exec_time)
+      stopCh <- true
+    }    
+  }()
 
 loop:
 	for {
@@ -244,10 +274,6 @@ loop:
 
         errors_count += 1 
 
-        //DEBUG
-        //fmt.Println("DEBUG: errors_count: "+ string(errors_count))
-        //fmt.Println("DEBUG: statements  : "+ statements)
-
         //we may have been connected ? Let's ping the server
         //if we don't have an answer, try to reconnect instead
 
@@ -270,11 +296,16 @@ loop:
         } else {
           success_count += 1
         }
-
+ 
         fmt.Print(string(colorGreen))
         fmt.Printf(ClearLine);
         fmt.Printf("\rScript executions succeeded : %10d                               ", success_count)
         fmt.Print(string(colorReset)) 
+
+        if success_count == exec_loops {
+          break loop;
+        }
+
       }
     }
   }
@@ -302,7 +333,6 @@ loop:
   fmt.Println("Summary")
   fmt.Println("=========================================================================")
   fmt.Print(string(colorGreen))
-  //fmt.Printf("\rScript statements commits   : %8d", success_count)
   fmt.Printf("\rScript executions succeeded : %10d", success_count)
 
   fmt.Printf(" (%.3f scripts/second)\n", statements_per_sec)

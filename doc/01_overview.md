@@ -2,10 +2,6 @@
 
 Welcome to pgSimload !
 
-The actual version of the program is:
-
-**pgSimload version 1.0.3 - January, 15th 2024**
-
 pgSimload is a tool written in Go, and accepts 2 different modes of execution:
 
   - **SQL-Loop mode** to execute a script infintely on a given schema of a
@@ -69,7 +65,8 @@ This tool can be used in different infrastructures:
   - on any PostgreSQL stand-alone PostgreSQL or PostgreSQL cluster
     running in a Kubernetes environment. 
 
-This tool can be used in different scenarios:
+This tool as different usages, and you probably think of some that I haven't
+listed here:
 
   - insert dummy data (mostly randomly if you know about, mostly,
     `generate_series()` and `random()` PostgreSQL functions) any DB with the
@@ -105,6 +102,18 @@ This tool can be used in different scenarios:
     - this "dummy data insertion" is most often used to simulate some 
       write work on a PostgreSQL server (standalone or the primary of a 
       PostgreSQL cluster with a(some) replica(s).
+
+    - as per version 1.1.0, the SQL-Loop mode execution can be limitated to:
+  
+      - a number of loop exections you define thanks to the `-loops <int64>` 
+        parameter and/or 
+  
+      - a given execution time of your choice you can define thanks to the
+        `-time duration` parameter, where that duration is expressed with
+        or without simple or double-quotes like in "10s", 1m30s or '1h40m'
+
+      - if both parameters are used at the same time, the SQL-Loop will end
+        whenever one or the other condition is satisfied
 
   - test failovers, or what happens when a DB is down: pgSimLoad handles those
     errors. Give it a try: simply shuting down your PostgreSQL server while it

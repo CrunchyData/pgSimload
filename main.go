@@ -6,6 +6,7 @@ import (
 	"os"
 	"github.com/eiannone/keyboard"
   "github.com/MakeNowJust/heredoc"
+  "time"
 )
 
 const (
@@ -24,12 +25,14 @@ const (
 );
 
 var (
-	i                int = 0
+	i                         int = 0
   configfilename            stringFlag
   createfilename            stringFlag
   scriptfilename            stringFlag
+  exec_loops                int64 = 0
+  exec_time                 time.Duration
 
-  Version = "pgSimLoad v.1.0.3 - January 15th 2024"
+  Version = "pgSimLoad v.1.1.0 - January 20th 2024"
 
   License = heredoc.Doc(`
 **The PostgreSQL License**
@@ -55,11 +58,11 @@ SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 For any question reach programmer at jean-paul.argudo@crunchydata.com.`)
 
-  License_short_notice = heredoc.Doc(`Copyright (c) 2022-2024, Crunchy Data Solutions, Inc.
+  License_short_notice = heredoc.Doc(`Copyright (c) 2022-2023, Crunchy Data Solutions, Inc.
   This program is licensied under The PostgreSQL License. You have a copy
   of the full license aside the source code in the file named LICENSE.md.`)
 
-  Contact = "You can contact programmer at : Jean-Paul Argudo <jean-paul.argudo@crunchydata.com>"
+  Contact = "You can contact programmer at : Jean-Paul Argudo <jean-paul.argudo@crunchydata.com>\nProject is hosted on https://github.com/CrunchyData/pgSimload"
 )
 
 type Config struct {
@@ -72,6 +75,8 @@ type Config struct {
      ApplicationName string
 }
 
+
+//String Flags
 type stringFlag struct {
     set   bool
     value string
@@ -87,6 +92,33 @@ func (sf *stringFlag) String() string {
     return sf.value
 }
 
+/*********
+//Int64 Flags
+type int64Flag struct {
+    set    bool
+    value  int64
+}
+
+func (int64f *int64Flag) Set(x int64) error {
+    int64f.value = x
+    int64f.set = true
+    return nil
+}
+
+//func (int64f *int64Flag) String() string {
+//    return string(int64f.value)
+//}
+*********/
+
+
+/******
+// Function to print out on screen error messages (in red)
+func printerrormsg (message string) {
+
+
+}
+*******/
+
 // Function to exit(1) the program putting in red the error message
 func exit1(message string, errcode error) {
     fmt.Print(string(colorRed))
@@ -101,12 +133,14 @@ func exit1(message string, errcode error) {
 }
 
 func init() {
-  flag.Var(&configfilename,        "config",       "JSON config filename")
-  flag.Var(&createfilename,        "create",       "JSON create filename")
-  flag.Var(&scriptfilename,        "script",       "SQL script filename")
+  flag.Var(&configfilename,        "config",    "JSON config filename")
+  flag.Var(&createfilename,        "create",    "JSON create filename")
+  flag.Var(&scriptfilename,        "script",    "SQL script filename")
   flag.Var(&sessiongucsfilename,   "session_parameters", "JSON session gucs filename")
-  flag.Var(&patroniconfigfilename, "patroni",      "JSON Patroni watcher mode config filename")
-  flag.Var(&gathergucsfilename   , "create_gucs_template", "outputs to that JSON filename")
+  flag.Var(&patroniconfigfilename, "patroni",   "JSON Patroni watcher mode config filename")
+  flag.Var(&gathergucsfilename   , "create_gucs_template", "outputs to that JSON filename") 
+  flag.Int64Var(&exec_loops,       "loops",  0, "number of SQL-Loop to execute") 
+  flag.DurationVar(&exec_time,     "time" ,  0, "duration of SQL-Loop execution")
 }
 
 //function to check flags passed with --flag value
@@ -158,24 +192,24 @@ func CheckFlags () {
   } 
 
   if !patroniconfigfilename.set {
-   
-      message := "Please read documentation in doc/ since parameters have to be passed"
-      message = message + "\nAlternatively, run with -h to show all possible parameters"
- 
-      if !configfilename.set {
-        exit1(message + "\n  -config is not set !",nil)
-      }
+    message := "Please read documentation in doc/ since parameters have to be passed"
+    message = message + "\nAlternatively, run with -h to show all possible parameters"
+    if !configfilename.set {
+      message = message + "\n  -config is not set !"
+      exit1(message,nil)
+    }
 
-      if !scriptfilename.set {
-        exit1(message + "\n  -script is not set !",nil)
-      }
+    if !scriptfilename.set {
+      message = message + "\n  -script is not set !"
+      exit1(message,nil)
+    }
   }
-
 }
 
 func start_banner (mode string) {
 
   switch (mode) {
+
     case "start":
       fmt.Println(string(colorReset))
       fmt.Printf("%s\n",License_short_notice)
@@ -183,6 +217,7 @@ func start_banner (mode string) {
       fmt.Println("Welcome to ",Version)
       fmt.Println("=========================================================================")
       fmt.Print(string(colorGreen))
+
     case "Patroni-monitoring","SQL-loop": 
 	    fmt.Println("About to start in "+mode+" mode")
       fmt.Print(string(colorReset))

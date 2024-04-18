@@ -1,5 +1,36 @@
 # Release notes
 
+## Version 1.2.0 (April 18th 2024)
+
+### Major changes
+
+- Added a new parameter to pgSimload command line to be used in SQL-Loop mode:
+
+  - `-sleep time.Duration` adds a sleep time between 2 iterations (executions)
+    of the `-script script.sql` (or whatever it's name).
+
+  - The interest of this parameter is double:
+
+    - it allows to throttle down the execution in SQL-Loop mode if this one is
+      "going too fast" and
+   
+    - it avoids the user to add a line like `select pg_sleep(1);` at the end
+      of the `script.sql`.
+
+  - Actually it corrects indirectly the previous behaviour when that `select
+    pg_sleep(n);` was used previously in `script.sql` around the count of
+    statements executed. This one was only updated once the *whole* script was 
+    executed, including the possible `select pg_sleep(n);` at the end.
+
+- documentation update to describe the new `-loops` and `-time` parameters to
+  be used in SQL-Loop mode
+
+### Minor changes
+
+- updated `examples/simple` examples and README file
+
+### Minor changes
+
 ## Version 1.1.0 (January 20th 2024)
 
 ### Major changes

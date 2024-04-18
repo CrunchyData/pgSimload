@@ -31,8 +31,9 @@ var (
   scriptfilename            stringFlag
   exec_loops                int64 = 0
   exec_time                 time.Duration
+  sleep_time                time.Duration
 
-  Version = "pgSimLoad v.1.1.0 - January 20th 2024"
+  Version = "pgSimLoad v.1.2.0 - April 18th 2024"
 
   License = heredoc.Doc(`
 **The PostgreSQL License**
@@ -92,33 +93,6 @@ func (sf *stringFlag) String() string {
     return sf.value
 }
 
-/*********
-//Int64 Flags
-type int64Flag struct {
-    set    bool
-    value  int64
-}
-
-func (int64f *int64Flag) Set(x int64) error {
-    int64f.value = x
-    int64f.set = true
-    return nil
-}
-
-//func (int64f *int64Flag) String() string {
-//    return string(int64f.value)
-//}
-*********/
-
-
-/******
-// Function to print out on screen error messages (in red)
-func printerrormsg (message string) {
-
-
-}
-*******/
-
 // Function to exit(1) the program putting in red the error message
 func exit1(message string, errcode error) {
     fmt.Print(string(colorRed))
@@ -141,6 +115,7 @@ func init() {
   flag.Var(&gathergucsfilename   , "create_gucs_template", "outputs to that JSON filename") 
   flag.Int64Var(&exec_loops,       "loops",  0, "number of SQL-Loop to execute") 
   flag.DurationVar(&exec_time,     "time" ,  0, "duration of SQL-Loop execution")
+  flag.DurationVar(&sleep_time,    "sleep",  0, "sleep duration between iterations in SQL-Loop")
 }
 
 //function to check flags passed with --flag value

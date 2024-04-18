@@ -199,7 +199,12 @@ func do_sqlloop(pgManager *PGManager) {
     exit1(message,nil)
   } else {
 	  fmt.Println()
-    fmt.Printf("Now entering the main loop, executing script %q\n",scriptfilename.value) 
+  
+    if sleep_time > 0 {
+      fmt.Printf("Now entering the main loop, executing script %q each %q\n",scriptfilename.value, sleep_time) 
+    } else {
+      fmt.Printf("Now entering the main loop, executing script %q as fast as possible\n",scriptfilename.value) 
+    }
 
     if exec_loops !=0 || exec_time !=0 {
       fmt.Printf("\nNumber of loops will be limited:\n")
@@ -305,6 +310,10 @@ loop:
         if success_count == exec_loops {
           break loop;
         }
+
+        if sleep_time > 0 {
+          time.Sleep(sleep_time)
+        } 
 
       }
     }

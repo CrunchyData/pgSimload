@@ -12,11 +12,11 @@ You'll find here binaries for your convenience.
   - `pgSimload_win.exe` : binary to use in Windows  `windows/amd64`
 
 ```
-$ md5sum pgSimload*
-0676f622b8fc213c3a0707b42308b3e0  pgSimload
-bee525f38cdbefcd64c58fe0722b26a7  pgSimload_mac
-53365de34e4062b70f605aeb98aefe34  pgSimload_static
-44a8b6b911fe29576bcb863119c5aa46  pgSimload_win.exe
+md5sum pgSimload*
+61c63e866796c53606cca227b33cbc9b  pgSimload
+97ebc3f14eae74b241f154752a6c6b9e  pgSimload_mac
+cbe9867b32840b6ad72dfa39a35e670b  pgSimload_static
+42f1028b3964599db54cb2feddd0aac5  pgSimload_win.exe
 ```
 
 # More information
@@ -29,13 +29,13 @@ If you're a Linux user, let me warn you that the binary has dependencies:
  
 ```
 $ ldd bin/pgSimload
-	linux-vdso.so.1 (0x00007ffcad3a2000)
-	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fc564800000)
-	/lib64/ld-linux-x86-64.so.2 (0x00007fc564b18000)
+	linux-vdso.so.1 (0x00007fff2d7be000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007ca096600000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007ca096949000)
 ```
 
 Those depedencies would be OK if as an example you're using an up-to-date
-Ubuntu Mantic Minautor (aka Ubuntu 23.10) as per January 11th 2024.
+Ubuntu Mantic Minautor (aka Ubuntu 23.10) as per April 18th 2024.
 
 But for any other machine without those versions of dependencies, please
 download and use instead the binary compiled *statically* for your convenience,

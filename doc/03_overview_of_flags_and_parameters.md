@@ -24,6 +24,7 @@ All flags are optional and intended to run alone.
 | `session_parameters` |                    | **X**              | JSON file       | Sets special session configuration parameters |
 | `loops`        |                    | **X**              | integer         | Sets the number of loops to execute before exiting  |
 | `time`         |                    | **X**              | duration        | Sets the total execution time before exiting |
+| `sleep`        |                    | **X**              | duration        | Sets a sleep duration between 2 iterations of the SQL-Loop |
 
 
 ## Patroni-Watcher mode : parameters
@@ -311,6 +312,30 @@ Total exec time             :    10.104s
 
 This parameter can be used in conjuction with the `-loops` parameter seen in
 the previous paragraph. Whichever is satisfied first will end the SQL-Loop.
+
+### **sleep** (duration) [OPTIONAL]
+
+This parameter was added in version 1.2.0.
+
+It allows the user to actually throttle down the execution in SQL-Loop mode.
+
+A pause of the `sleep` duration will be added between each iteration of the
+execution of the SQL script.
+
+That duration is expressed the very same way the `time` parameter is (see
+previous paragraph). 
+
+Note that when `sleep` and `time` are used together, it can cause side effects
+on the total desired execution time, as an example:
+
+  - the script is a plain "select 1;" that goes ultra fast (time to exec is 
+    close to 0 seconds)
+  - `time` is set to `10s`
+  - `sleep`  is set to `4s`
+  - the total execution time *won't be* 10s, but rather 12s, because on the 
+    3rd execution at 8s, the pause will last 4s, leading to 12s overall... 
+
+Just bare that in mind when creating your tests use cases, etc.
 
 ## Patroni-Watcher mode flag and parameters
 

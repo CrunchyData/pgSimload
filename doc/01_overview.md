@@ -51,7 +51,8 @@ $ sh build.sh
 ## DEB and RPM packages
 
 We've started tests to build those packages but at the moment, the work hasn't
-finish yet. Those packages will be available soon.
+finish yet. But do you really need this, since pgSimload is a standalone
+binary ?
 
 # Usages
 
@@ -68,6 +69,10 @@ This tool can be used in different infrastructures:
 This tool as different usages, and you probably think of some that I haven't
 listed here:
 
+  - just initiate a plain `select 1`, a `select count(*) from...`, whatever
+    you find usefull. But pgSimload won't get you results back from those
+    executions
+ 
   - insert dummy data (mostly randomly if you know about, mostly,
     `generate_series()` and `random()` PostgreSQL functions) any DB with the
      schema of your choice and the SQL script of your choice
@@ -103,7 +108,7 @@ listed here:
       write work on a PostgreSQL server (standalone or the primary of a 
       PostgreSQL cluster with a(some) replica(s).
 
-    - as per version 1.1.0, the SQL-Loop mode execution can be limitated to:
+    - the SQL-Loop mode execution can be limitated to:
   
       - a number of loop exections you define thanks to the `-loops <int64>` 
         parameter and/or 
@@ -114,6 +119,16 @@ listed here:
 
       - if both parameters are used at the same time, the SQL-Loop will end
         whenever one or the other condition is satisfied
+
+    - the rate of the iterations can be slowed down since version 1.2.0 thanks
+      to the `-sleep duration` parameter, where a duration is expressed the
+      same way `-time duration` is (see upper). If this parameter is set to 
+      anything else that 0, pgSimload will sleep for that amount of time. 
+      This is usefull if you want to slow down the SQL-Loop process. It also
+      avoid the user to manually add like a `select pg_sleep(1);` at the end
+      of the `SQL script` used with `-script`. So it's faster to test
+      different values of "sleeping" by recalling the command line and
+      changing the value there instead of editing that SQL script...
 
   - test failovers, or what happens when a DB is down: pgSimLoad handles those
     errors. Give it a try: simply shuting down your PostgreSQL server while it

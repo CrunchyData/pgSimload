@@ -1,5 +1,54 @@
 # Release notes
 
+## Version 1.3.0 (April 24th 2024)
+
+### Major changes
+
+- Added a new "Kube-Watcher" mode! This one allows to have a minimal 
+  monitoring of any PostgreSQL cluster running in Kubernetes, whatever
+  the operator is, since it *only* uses 2 `kubectl` commands, in a loop, 
+  to create the monitoring. See examples in `examples/Kube-Watcher/`
+  and the relevant parts in the documentation on how to use it !
+
+  - TL,DR: simple as `pgSimload -kube <kube.json>`
+
+  - Special thanks to "Pierrick" from CloudNativePG Slack, that helped 
+    me find the right labels and selectors for that operator to be used
+    in the `kube.json` configuration file !
+
+- documentation update to describe the new "Kube-Watcher" mode.
+
+### Minor changes
+
+- changed the way the screen is refreshed in Patroni-Watcher, for better
+  performances and less output in the terminal 
+  
+  - moved from `github.com/inancgumus/screen`, `screen.Clear()` and
+    `screen.MoveTopLeft()`
+  
+  - to simplied ANSI's `fmt.Printf("\x1bc")`
+
+  - **please** let me know if this change break something for you, I can 
+    revert that easily in case. I do really lack feedback from pgSimload
+    users!
+
+- simplier way of coding (most often, output messages) strings to be 
+  used in output: `A+=B` instead of `A=A+B`. (/me noob)
+
+- added 3 new functions to better padding (left/right) and count length of 
+  some output strings (eg podname lenght in Kube-Watcher mode, to align
+  the outputs when more than 1 cluster is listed in this mode)
+
+- added `K8s_selector` field in `patroni.json` configuration file for 
+  Patroni-Watcher, so it can be monitoring any namespace other than the 
+  default set with, typically, `kubectl config set-context --current --namespace=<namespace_name>`
+
+- renamed in doc, including examples directory and in executables'outputs
+  everything to be consistent among the 3 modes: "SQL-Loop", "Patroni-Watcher"
+  and the new "Kube-Watcher" in version 1.3.0
+
+- lots of doc review, many errors find and corrected
+
 ## Version 1.2.0 (April 18th 2024)
 
 ### Major changes

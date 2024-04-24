@@ -2,13 +2,16 @@
 
 Welcome to pgSimload !
 
-pgSimload is a tool written in Go, and accepts 2 different modes of execution:
+pgSimload is a tool written in Go, and accepts 3 different modes of execution:
 
-  - **SQL-Loop mode** to execute a script infintely on a given schema of a
+  - **SQL-Loop** mode to execute a script infintely on a given schema of a
     given database with a given user 
 
-  - **Patroni-Watcher mode** to execute a monitoring on a given Patroni
-    cluster. So you need one of such for this mode to be useful to you
+  - **Patroni-Watcher** mode to execute a monitoring on a given Patroni
+    cluster. This is usefull only if... you run Patroni
+
+  - **Kube-Watcher** mode to have a minimal monitoring of a given PostgreSQL
+    cluster in Kubernetes
 
 Given the mode you choose, some parameters are mandatory or not. And the
 contexts of executions are different. Please refer to the complete
@@ -79,9 +82,9 @@ listed here:
    
     - if your database doesn't have a schema yet, you can create in a
       `create.json` file. Look for examples on how to do that in the
-      `examples/` directory. It should straightforward. That file is **not** 
-      mandatory, as pgSimload need at least a `-config <file>` and a `-script
-      <file>` to run, in SQL-Loop mode.
+      `examples/SQL-Loop/` directory. It should straightforward. That file is
+      **not** mandatory, as pgSimload need at least a `-config <file>` and a
+      `-script <file>` to run, in SQL-Loop mode.
 
     - the SQL script of your choice. For that purpose you create a plain 
       SQL file, where you put everything you want in it. It will be run in an
@@ -154,6 +157,14 @@ listed here:
       the `patroni.json` config file passed as an argument to `-patroni
       <patroni.json>` parameter. If set to `nogucs`, no extra GUCs are shown,
       only the info from `pg_stat_replication` will be
+
+  - monitor a PostgreSQL cluster that runs in Kubernetes, wheter this
+    solution uses Patroni or not for HA: this mode only uses some `kubectl` 
+    commands to gather only the relevant information to monitor things, like
+    who's primary, who's replica, the status of each, etc. This mode has been
+    tested against the Postgres Operator (aka PGO), from CrunchyData, and the
+    operator from CloudNativePG. You'll find in the `example/Kube-Watcher/` 
+    directory proper configuration JSON to use in both cases
 
   - demo [Crunchy Postgres](https://www.crunchydata.com/products/crunchy-high-availability-postgresql), a fully Open Source based PostgreSQL distribution
     using extensively Ansible 

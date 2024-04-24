@@ -26,6 +26,11 @@ All flags are optional and intended to run alone.
 | `time`         |                    | **X**              | duration        | Sets the total execution time before exiting |
 | `sleep`        |                    | **X**              | duration        | Sets a sleep duration between 2 iterations of the SQL-Loop |
 
+## Kube-Watcher mode : parameters
+
+| Name       |  Mandatory         | Optional           | Value expected  | Description                                  |
+| :---       |    :-----:         |  :----:            |  :---:          |    :----                                     |
+| `kube`     | **X**              |                    | JSON file       | Sets parameters for this special mode        |
 
 ## Patroni-Watcher mode : parameters
 
@@ -150,8 +155,8 @@ on which you've adapted the SQL present in the `script`, then you don't need
 this feature. That's why it is optional.
 
 To have a better idea of what's expected here, please refer to
-`examples/PG_15_Merge_command/create.json` or `examples/testdb/create.json`
-files.
+`examples/SQL-Loop/PG_15_Merge_command/create.json` or
+`examples/SQL-Loop/testdb/create.json` files.
 
 ### **script** (SQL text file) [MANDATORY]
 
@@ -160,7 +165,7 @@ loop of pgSimpload in the "SQL-Loop mode".
 
 It can be as simple as a "SELECT 1;". Or much more complex with SQL SQL
 statements of your choice separated by semi-colon and newlines. As an example
-of a more complicated example see `examples/PG_15_Merge_command/script.sql`.
+of a more complicated example see `examples/SQL-Loop/PG_15_Merge_command/script.sql`.
 
 It will run the querie(s) "all at once" in an implicit transaction. For more
 details on how it works, please read chapter
@@ -230,7 +235,7 @@ read from the brand new `session_parameters.json` you just created, like in:
 The following Session Parameters are set:
 
 
-Now entering the main loop, executing script "./examples/testdb/script.sql"
+Now entering the main loop, executing script "./examples/SQL-Loop/testdb/script.sql"
 Script executions succeeded :        60
 ```
 
@@ -238,7 +243,7 @@ Script executions succeeded :        60
 changed the keyword `"sessionparameters":` : don't do that, it's expected in
 pgSimload to have such keyword there. It is also expected that your JSON file
 here is valid, like given in the example file given in 
-`examples/testdb/session_parameters.json`
+`examples/SQL-Loop/testdb/session_parameters.json`
 
 ### **loops** (integer64) [OPTIONAL]
 
@@ -337,18 +342,151 @@ on the total desired execution time, as an example:
 
 Just bare that in mind when creating your tests use cases, etc.
 
+## Kube-Watcher mode flag and parameters
+
+To have pgSimload act as a Kube-Watcher tool inside a termina, all you have to
+do is create a `kube.json` file in the following format.
+
+### **kube** (JSON text file) [MANDATORY]
+
+When this parameter is set (`-kube <kube.json>`), you're asking pgSimload to
+run in Kube-Watcher mode. This mode means that you want pgSimload to monitor
+your PostgreSQL cluster that runs in Kubernetes, whether this one uses *or
+not* Patroni or whatever for HA, or even if the cluster is *not* in HA. 
+
+Simply, this mode runs some `kubectl` commands in the background, so it is
+**mandatory** you have a working `kubectl` command installed in your system.
+
+This command will show relevant info on your pods: 
+
+  - which is primary
+  - which is(are) replica(s) 
+  - the status of each pod
+  - a colored button in that description, so
+    - green is a primary
+    - blue is a replica
+    - red means the pod is down for some reason
+
+So that information won't show the TimeLine (aka TL), or Lag between nodes,
+unlike Patroni-Watcher mode would do. But still, it's probably sufficient in
+many cases, and is a light-weight monitoring of a PostgreSQL cluster in
+Kubernetes!
+
+I've added 2 samples JSON configurations you may even not have to change:
+ 
+  - `examples/Kube-Watcher/kube.json.PGO` is the one to be used for 
+    any Crunchy Postgres for Kubernetes and/or Postgres Operator from 
+    Crunchy Data
+  
+  - `examples/Kube-Watcher/kube.json.CloudNativePG` is the one to be used
+    for any CloudNativePG PostgreSQL cluster
+
+Let's present that JSON with the PGO version: only the values will differ:
+
+```code
+$ cat examples/Kube-Watcher/kube.json.PGO
+{
+    "Namespace"        : "postgres-operator", 
+    "Watch_timer"      : 2,
+    "Limiter_instance" : "postgres-operator.crunchydata.com/instance",
+    "Pod_name"         : "NAME:.metadata.name",
+    "Pod_role"         : "ROLE:.metadata.labels.postgres-operator\\.crunchydata\\.com/role",
+    "Cluster_name"     : "CLUSTER:.metadata.labels.postgres-operator\\.crunchydata\\.com/cluster",
+    "Node_name"        : "NODE:.spec.nodeName",
+    "Pod_zone"         : "ZONE:.metadata.labels.topology\\.kubernetes\\.io/zone",
+    "Pod_status"       : "STATUS:status.conditions[?(@.status=='True')].type",
+    "Master_caption"   : "leader",
+    "Replica_caption"  : "... replica",
+    "Down_caption"     : "<down>"
+}
+```
+
+Beware those `\\.` (double-escaping) are not errors, that's the way to specify
+things in `kubectl` : those "dots" have to be escaped. And in pgSimload, since
+it's a JSON, it has to be escaped *twice*...
+
+**Namespace** (string)
+
+To specify on which kube namespace we will send the underlying `kubectl`
+commands.
+
+**Watch_timer** (integer)
+
+How often to refresh the output you see in this Kube-Watcher mode.
+
+**Limiter_instance** (string)
+
+From that field in the JSON, up to **Master_caption**, you won't probably have
+to change those, if you're using the *right* example JSON given in the
+directory `examples/Kube-Watcher/`.
+
+This parameter is a way to limit the output of `kubectl get pods` commands
+("-l").
+
+**Pod_name** (string)
+
+This is how we can get the pod's name.
+
+**Pod_role** (string)
+
+This is the way we get the pod's role, that can be:
+
+  - a "replica" for PGO and CloudNativePG
+
+  - a "master" (for PGO) or a "primary" (for CloudNativePG)
+
+**Cluster_name** (string)
+
+This is the way we get the PostgreSQL's cluster name.
+
+**Node_name** (string)
+
+This is the way we get node node's names. That Node name is used in the 2nd
+`kubectl` command that is a `kubectl get nodes` one, to get back the Zone and
+the Status of the given node.
+
+**Pod_zone** (string)
+
+This specifies how to gather the pod's zone, if it exists.
+
+**Pod_status** (string)
+
+This specifies how to gather the pod's status.
+
+**Master_caption** (string)
+
+This parameter allows the user to set the caption that will be displayed in
+the Kube-Watcher mode for the primary Postgres instance in the cluster.
+
+It can be whatever you like. Most probably, "primary" and "leader" are good
+candidates here!
+
+**Replica_caption** (string)
+
+This parameter allows the user to set the caption that will be displayed in
+the Kube-Watcher mode for all the instances that are actually replicas of the
+primary.  
+
+It can be whatever you like. Most probably, "replica" is great enough... 
+"..replica" is good too, if you want to show some hierarchy in between
+replica(s) and the primary.
+
+**Down_caption** (string)
+
+Finaly, this paramter allows you to specify the caption for any "down" pod.
+
 ## Patroni-Watcher mode flag and parameters
 
-To use have pgSimload act as a Patroni-Watcher tool in a side terminal, all
+To have pgSimload act as a Patroni-Watcher tool in a side terminal, all
 you have to do is to create a `patroni.json` file in the following format.
 Note that the name doesn't matter much, you can name the way you want.
 
-### **patroni** (value) [MANDATORY]
+### **patroni** (JSON text file) [MANDATORY]
 
 When this paramter is set (`-patroni <patroni.json>`), you're asking pgSimload
 to run in Patroni-Watcher mode. This parameter is used to give to the tool
 the relative or complete path to a JSON file formated like the following
-(note: you can find a copy of this file in `examples/patroni_monitoring/`:
+example you can find a copy in `examples/Patroni-Watcher/` subdirectories: 
 
 ```code 
 $ cat patroni.json 
@@ -362,27 +500,23 @@ $ cat patroni.json
     "Replication_info" : "server_version,synchronous_standby_names,synchronous_commit,work_mem",
     "Watch_timer"      : 5,
     "Format"           : "list",
-    "K8s_selector"     : ""
+    "K8s_selector"     : "",
+    "K8s_namespace"    : ""
 }
 ```
 
-**Cluster** 
+**Cluster** (string)
 
 You must specify here the Patroni's clustername. You can generaly find it
 where your have Patroni installed in `/etc/patroni/<cluster_name>.yml` or
 inside the `postgresql.yml`. 
 
-**Remote_host** 
+**Remote_host** (string)
 
 You have to set here the `ip` (or `hostname`) where pgSimload will `ssh` to
 issue the remote command `patronictl` as user `patroni_user` (see up there).
 
-**Remote_port** 
-
-You have to set here the `port` on wich  pgSimload will `ssh` to. Let the
-default `22` if you didn't changed the `sshd` port of your remote server.
-
-**Remote_user** 
+**Remote_user** (string)
 
 This is an user on one of the PG boxes where Patroni is installed. That one
 you use to launch Patroni's `patronictl`. Depending the security configuration
@@ -390,12 +524,17 @@ of your PostgreSQL box, Patroni could run with the system account PostgreSQL
 is running with, or another user. This one may have need to use `sudo` or not.
 Again,that all depends on your setup.
 
-**Use_sudo**
+**Remote_port** (integer)
+
+You have to set here the `port` on wich  pgSimload will `ssh` to. Let the
+default `22` if you didn't changed the `sshd` port of your remote server.
+
+**Use_sudo** (string)
 
 If the previous user set in **Remote_user** needs to use `sudo` before issuing
 the `patronictl` command, then set this value to "yes".
 
-**Ssh_private_key**
+**Ssh_private_key** (string)
 
 Since `ssh`-ing to the `Remote_host` IP or (`hostname` if it's enabled in your
 DNS) need an SSH pair of keys to connect, we're asking where is that private
@@ -407,7 +546,7 @@ the box where pgSimload is running to the target host, specifically, that the
 public key of your user is present in the `~/.ssh/authorized_keys` of the
 taget system and with the matching **Remote_user**.
 
-**Replication_info**
+**Replication_info** (string)
 
 Thanks to this feature, pgSimload can show extra information about
 replication. This is usefull if Patroni doesn't do "everything in HA", like
@@ -429,9 +568,9 @@ If disabled, the "Replication information" no extra information will be shown
 after the output of the `patronictl ... list` command.
 
 If you want to activate it, like `Replication_info` is anything different to
-an empty string, **be sure you also provide** a `-config <config.json>`
+an empty string, **be sure you also provide also `-config <config.json>`
 parameter, pointing to a file where superuser `postgres` connection string is
-defined. So that in this config file, "Username" should be set to "postgres",
+defined**. So that in this config file, "Username" should be set to "postgres",
 and the PG box name and port should be directly set.
 
 So there's 2 ways to activate this feature described above.
@@ -459,9 +598,10 @@ This can be something like:
 [...]
 ```
 
-You can look at examples given at `examples/patroni_monitoring/`.
+You can look at examples given in `examples/Patroni-Watcher/` README and
+subdirectories.
 
-**Watch_timer**
+**Watch_timer** (integer)
 
 You can ask for the output in the Patroni-Watcher mode to be like a bash
 "watch" command: it will run every `x` seconds you define here.
@@ -476,7 +616,7 @@ request.
 If the value is less than 1, pgSimload will assume you only want to run it
 once in the Patroni-Watcher mode.
 
-**Format**
+**Format** (string)
 
 The `patronictl` command offers two modes to list the nodes:
 
@@ -485,25 +625,28 @@ The `patronictl` command offers two modes to list the nodes:
   - `topology` will show the Primary first, so the order may change if 
     you do a *switchover* of a *failover* 
 
-**K8s_selector**
+**K8s_selector** (string)
 
 This parameter has to be set **only if your PostgreSQL Patroni cluster is in
 Kubernetes**.
 
 The value of this field must be what you'd put in the "selector" chain of that
 particular `kubectl` command, if you want to get the name of the pod where the
-current PostgreSQL primary is executing into:
+current PostgreSQL primary is executing into, and you're running Crunchy
+Postgres for Kubernetes, that could be done with the following command:
 
 ```code
-$ kubectl get pods --selector='postgres-operator.crunchydata.com/cluster=hippo,postgres-operator.crunchydata.com/role=master' -o name 
-pod/hippo-instance1-mr6g-0
+$ kubectl get pods \
+    -n postgres-operator \
+    --selector='postgres-operator.crunchydata.com/cluster=hippo,postgres-operator.crunchydata.com/role=master' \
+    -o name 
 ```
 
 So pgSimload knows the pod where the Primary PostgreSQL server is running.
 
 The usage of pgSimload in Patroni-Watcher mode in Kubernetes **has
 requirements**, we urge you to read carrefully the documentation you can
-access at `examples/patroni_monitoring/README.md` !
+access at `examples/Patroni-Watcher/README.md` !
 
 In short, if the Patroni-Watcher mode has to be executed on a cluster of
 PostgreSQL servers in Patroni, the only relevant paramters in the patroni.json
@@ -520,6 +663,18 @@ file would then be:
     first
   - `K8s_selector` has we already seen up there
   - all others parameters won't apply, so you can leave them empty ("")
+
+**K8s_namespace** (string)
+
+This parameter has to be set **only if your PostgreSQL Patroni cluster is in
+Kubernetes**.
+
+You will set this value to the namespace you're using for your current
+PostgreSQL Cluster.
+
+If you're using Cruchy Postgres for Kubernetes, and you're actually following
+the documentation in there, that could be `postgres-operator`, or anything
+you're actually using.
 
 ## Session parameters template file creation
 

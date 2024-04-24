@@ -1,9 +1,0 @@
-{
-    "Hostname":         "distant_external_ip_of_postgres_cluster",
-    "Port"    :         "5432",
-    "Database":         "hippo",
-    "Username":         "postgres",
-    "Password":         "postgrespasswordhere",
-    "Sslmode" :         "require",
-    "ApplicationName" : "pgSimload"
-}

@@ -1,0 +1,9 @@
+{
+    "Hostname":         "localhost",
+    "Port"    :         "5432",
+    "Database":         "stations",
+    "Username":         "yourusernamehere",
+    "Password":         "yourpasswordhere",
+    "Sslmode" :         "disable",
+    "ApplicationName" : "pgSimload"
+}

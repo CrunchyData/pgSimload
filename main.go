@@ -7,6 +7,7 @@ import (
 	"github.com/eiannone/keyboard"
   "github.com/MakeNowJust/heredoc"
   "time"
+  "strings"
 )
 
 const (
@@ -33,7 +34,7 @@ var (
   exec_time                 time.Duration
   sleep_time                time.Duration
 
-  Version = "pgSimLoad v.1.2.0 - April 18th 2024"
+  Version = "pgSimLoad v.1.3.0 - April 24th 2024"
 
   License = heredoc.Doc(`
 **The PostgreSQL License**
@@ -106,12 +107,44 @@ func exit1(message string, errcode error) {
     os.Exit(1)
 }
 
+// strings function to pad left, right, given a size of biggest element in the
+// list
+func LongestOf(s string) int {
+    length := 0
+    for _, word := range strings.Split(s, " ") {
+        if len(word) > length {
+            length = len(word)
+        } 
+    }       
+    return length
+}         
+            
+func PadRight(str, pad string, lenght int) string {
+  for {   
+    str += pad
+    if len(str) > lenght {
+      return str[0:lenght]
+    }       
+  }       
+}           
+          
+func PadLeft(str, pad string, lenght int) string {
+  for {   
+    str = pad + str
+    if len(str) > lenght {
+      return str[0:lenght] 
+    }
+  }
+}
+
+
 func init() {
   flag.Var(&configfilename,        "config",    "JSON config filename")
   flag.Var(&createfilename,        "create",    "JSON create filename")
   flag.Var(&scriptfilename,        "script",    "SQL script filename")
   flag.Var(&sessiongucsfilename,   "session_parameters", "JSON session gucs filename")
   flag.Var(&patroniconfigfilename, "patroni",   "JSON Patroni watcher mode config filename")
+  flag.Var(&kubeconfigfilename   , "kube" ,     "JSON Kube watcher mode config filename")
   flag.Var(&gathergucsfilename   , "create_gucs_template", "outputs to that JSON filename") 
   flag.Int64Var(&exec_loops,       "loops",  0, "number of SQL-Loop to execute") 
   flag.DurationVar(&exec_time,     "time" ,  0, "duration of SQL-Loop execution")
@@ -157,7 +190,7 @@ func CheckFlags () {
   if gathergucsfilename.set {
     if !configfilename.set {
       message := "To create a template JSON file to be used in -session_parameters\n"
-      message = message + "You actually have to use a -config config.json in conjunction with it\n"
+      message += "You actually have to use a -config config.json in conjunction with it\n"
       exit1(message,nil)
     } else {
       gatherGucs()
@@ -167,18 +200,21 @@ func CheckFlags () {
   } 
 
   if !patroniconfigfilename.set {
-    message := "Please read documentation in doc/ since parameters have to be passed"
-    message = message + "\nAlternatively, run with -h to show all possible parameters"
-    if !configfilename.set {
-      message = message + "\n  -config is not set !"
-      exit1(message,nil)
-    }
+    if !kubeconfigfilename.set {
+      message := "Please read documentation in doc/ since parameters have to be passed"
+      message += "\nAlternatively, run with -h to show all possible parameters"
+      if !configfilename.set {
+        message = message + "\n  -config is not set !"
+        exit1(message,nil)
+      }
 
-    if !scriptfilename.set {
-      message = message + "\n  -script is not set !"
-      exit1(message,nil)
+      if !scriptfilename.set {
+        message = message + "\n  -script is not set !"
+        exit1(message,nil)
+      }
     }
   }
+
 }
 
 func start_banner (mode string) {
@@ -193,7 +229,7 @@ func start_banner (mode string) {
       fmt.Println("=========================================================================")
       fmt.Print(string(colorGreen))
 
-    case "Patroni-monitoring","SQL-loop": 
+    case "Patroni-Watcher","Kube-Watcher","SQL-loop": 
 	    fmt.Println("About to start in "+mode+" mode")
       fmt.Print(string(colorReset))
       fmt.Println("=========================================================================")
@@ -215,7 +251,7 @@ func main() {
   if patroniconfigfilename.set {
  
     //adds info to start banner: we're starting in Patroni-monitoring mode
-    start_banner("Patroni-monitoring")
+    start_banner("Patroni-Watcher")
 
 	  // Wait for Enter or Esc Key
 	  if err := keyboard.Open(); err != nil {
@@ -236,10 +272,34 @@ func main() {
       }
     }
 
+  } else if kubeconfigfilename.set {
+
+    //adds info to start banner: we're starting in Kube-watcher mode
+    start_banner("Kube-Watcher")
+
+	  // Wait for Enter or Esc Key
+	  if err := keyboard.Open(); err != nil {
+      exit1("Error:\n",err)
+	  }
+
+    for {
+      _, key, err := keyboard.GetKey()
+      if err != nil {
+        exit1("Error:\n",err)
+      }
+      if key == keyboard.KeyEsc {
+        break
+      } else if key == keyboard.KeyEnter {
+        KubeWatch()
+        _ = keyboard.Close()
+        break
+      }
+    }
+
   } else {
 
     //adds info to start banner: we're starting in SQL-loop  mode
-    start_banner("SQL-loop")
+    start_banner("SQL-Loop")
 
 	  // Wait for Enter or Esc Key
 	  if err := keyboard.Open(); err != nil {

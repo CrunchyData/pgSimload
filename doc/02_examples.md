@@ -3,9 +3,9 @@
 You can find several examples of usage in the main directory of the project
 under `examples/`.
 
-## `examples/simple/`
+## `examples/SQL-Loop/simple/`
 
-This example is the simpliest one:
+This example is the simpliest example of the SQL-Loop mode!
 
 Prerequisites
 
@@ -53,9 +53,10 @@ $ pgSimload -config config.json -script script.sql -time 1s -loops 20
 $ pgSimload -config config.json -script script.sql -time 10s -loops 20
 ```
 
-## `examples/PG_15_Merge_command/`
+## `examples/SQL-Loop/PG_15_Merge_command/`
 
-This example is to test new MERGE command in PG 15.x
+This example is to test the MERGE command first introduced in PostgreSQL
+version 15.
 
 Prerequisites
 
@@ -98,7 +99,7 @@ complex and heaven tho:
 $ sh watcher.sh histogram
 ```
 
-## `examples/testdb/`
+## `examples/SQL-Loop/testdb/`
 
 This is another example that shows one can:
 

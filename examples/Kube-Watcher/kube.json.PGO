@@ -1,0 +1,14 @@
+{
+    "Namespace"        : "postgres-operator", 
+    "Watch_timer"      : 2,
+    "Limiter_instance" : "postgres-operator.crunchydata.com/instance",
+    "Pod_name"         : "NAME:.metadata.name",
+    "Pod_role"         : "ROLE:.metadata.labels.postgres-operator\\.crunchydata\\.com/role",
+    "Cluster_name"     : "CLUSTER:.metadata.labels.postgres-operator\\.crunchydata\\.com/cluster",
+    "Node_name"        : "NODE:.spec.nodeName",
+    "Pod_zone"         : "ZONE:.metadata.labels.topology\\.kubernetes\\.io/zone",
+    "Pod_status"       : "STATUS:status.conditions[?(@.status=='True')].type",
+    "Master_caption"   : "leader",
+    "Replica_caption"  : "... replica",
+    "Down_caption"     : "<down>"
+}

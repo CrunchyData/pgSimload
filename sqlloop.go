@@ -92,7 +92,7 @@ func ExecCreate(pgManager *PGManager) {
     if err != nil {
       //connectionInstance.Close(context.Background())
       message := "Something went wrong trying to execute the SQL script\n"
-      message = message + createfilename.value + " on the database\n"
+      message += createfilename.value + " on the database\n"
       exit1(message,err)
     }
 
@@ -195,7 +195,7 @@ func do_sqlloop(pgManager *PGManager) {
 
   if bad_script > 0 {
     message := "Execution of SQL script in "+scriptfilename.value+" returns errors"
-    message = message + "\nPlease correct the errors prior running pgSimload."
+    message += "\nPlease correct the errors prior running pgSimload."
     exit1(message,nil)
   } else {
 	  fmt.Println()

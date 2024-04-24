@@ -1,0 +1,16 @@
+{
+  "queries": [
+    {
+      "ddl_sql": "create schema if not exists test authorization jpargudo;"
+     ,"comment": "Create schema test"
+    },
+    {
+      "ddl_sql": "create table if not exists test.data ( id bigint generated always as identity primary key, insert_date timestamp default current_timestamp , a integer);"
+     ,"comment": "Create table test.data"
+    } 
+   ,{ 
+       "ddl_sql": "delete from test.data;"
+      ,"comment": "Delete from test.data"
+    }
+  ]
+}

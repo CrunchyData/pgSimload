@@ -13,10 +13,10 @@ You'll find here binaries for your convenience.
 
 ```
 md5sum pgSimload*
-61c63e866796c53606cca227b33cbc9b  pgSimload
-97ebc3f14eae74b241f154752a6c6b9e  pgSimload_mac
-cbe9867b32840b6ad72dfa39a35e670b  pgSimload_static
-42f1028b3964599db54cb2feddd0aac5  pgSimload_win.exe
+955227f4d8ce90ad24ae0c3bcfaf4cde  pgSimload
+06e2593b109dce0dd4bb608c3a513696  pgSimload_mac
+ef46a6bf429a1e83748b7fe504069ee7  pgSimload_static
+d340bddca2cd3fce7b64faf3715adf9e  pgSimload_win.exe
 ```
 
 # More information
@@ -29,9 +29,9 @@ If you're a Linux user, let me warn you that the binary has dependencies:
  
 ```
 $ ldd bin/pgSimload
-	linux-vdso.so.1 (0x00007fff2d7be000)
-	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007ca096600000)
-	/lib64/ld-linux-x86-64.so.2 (0x00007ca096949000)
+	linux-vdso.so.1 (0x00007ffd1fdcf000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x0000747478000000)
+	/lib64/ld-linux-x86-64.so.2 (0x000074747840e000)
 ```
 
 Those depedencies would be OK if as an example you're using an up-to-date

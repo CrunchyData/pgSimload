@@ -47,15 +47,15 @@ func (m *SSHManager) connectSSH() (*ssh.Client, error) {
   file_privateKey, err := os.ReadFile(m.Config.PrivateKey)
   if err != nil {
     message := "\nCould not read SSH private key file defined in " 
-    message = message + patroniconfigfilename.value +  ":\n"
+    message += patroniconfigfilename.value +  ":\n"
     exit1(message, err)
   }
 
   key, err := ssh.ParsePrivateKey([]byte(file_privateKey))
   if err != nil {
     message := "\nCould not use SSH private key file defined in "
-    message = message + patroniconfigfilename.value
-    message = message + "\nYou may have entered the public key instead the private one ?\n"
+    message += patroniconfigfilename.value
+    message += "\nYou may have entered the public key instead the private one ?\n"
     exit1(message, err)
   }
 

@@ -11,7 +11,6 @@ import (
 	"github.com/eiannone/keyboard"
   "encoding/json"
   "github.com/MakeNowJust/heredoc"
-  "github.com/inancgumus/screen"
   "regexp"
 )
 
@@ -22,10 +21,6 @@ var (
   patroniconfigfilename     stringFlag
   patronictlout             string = ""
   pod                       string = ""
-  // variables to handle exec time 
-  // and adjust the loop to match
-  // user's expectations
-  start                     time.Time
 
   replication_info_query = heredoc.Doc(`
 select                            
@@ -65,6 +60,7 @@ type PatroniConfig struct {
     Replication_info string
     Watch_timer      int
     Format           string
+    K8s_namespace    string
     K8s_selector     string
 }
 
@@ -156,7 +152,7 @@ func ReadPatroniConfig () PatroniConfig {
   err := decoder.Decode(&configuration) 
   if err != nil {
     message := "Error while reading the file "
-    message = message + patroniconfigfilename.value +":\n"
+    message += patroniconfigfilename.value +":\n"
     exit1(message,err)
   }
 
@@ -228,7 +224,7 @@ func Replication_info(user_gucs string, pgManager *PGManager) {
   //fmt.Println("DEBUG : Replication info query is :",replication_info_query)
 
   output := "+ Replication information\n"
-  output = output + "+----------------------------------+---------------------------------------+----------------------------------+\n"
+  output += "+----------------------------------+---------------------------------------+----------------------------------+\n"
 
   row_count := 0
  
@@ -308,7 +304,11 @@ func PatroniWatch_ssh(patroni_config PatroniConfig, remote_command string, pgMan
 			  }
 		  default:
 
-        start = time.Now()
+
+        // variables to handle exec time 
+        // and adjust the loop to match
+        // user's expectations
+        start := time.Now()
 
         //execution on SSH boxes
 
@@ -326,7 +326,7 @@ func PatroniWatch_ssh(patroni_config PatroniConfig, remote_command string, pgMan
 
 				     if err := sshManager.EnsureConnected(); err != nil {
                message := "Error reopening SSH client:\n"
-               message = message + "Maybe worth verifying your "+patroniconfigfilename.value + " file ?"
+               message += "Maybe worth verifying your "+patroniconfigfilename.value + " file ?"
                exit1(message, err)
 				     }
 			     }
@@ -340,8 +340,8 @@ func PatroniWatch_ssh(patroni_config PatroniConfig, remote_command string, pgMan
         if patroni_config.Watch_timer > 1 {
 
           // Clears the screen
-          screen.Clear()
-          screen.MoveTopLeft()
+          fmt.Printf("\x1bc")
+
           fmt.Println()
           currentTime := time.Now()
     
@@ -353,7 +353,9 @@ func PatroniWatch_ssh(patroni_config PatroniConfig, remote_command string, pgMan
           if pgManager != nil {
             Replication_info(patroni_config.Replication_info, pgManager)
           }
-  
+ 
+          //it took actually that real_exec_time to    
+          //execute this step in the main loop
           real_exec_time    := time.Since(start)
 
           //sleep for a computed time to match patroni_config.Watch_timer
@@ -366,8 +368,8 @@ func PatroniWatch_ssh(patroni_config PatroniConfig, remote_command string, pgMan
           // Watch_timer is something inferior to 1 : we run once only
   
           // Clears the screen
-          screen.Clear()
-          screen.MoveTopLeft()
+          fmt.Printf("\x1bc")
+
           fmt.Println()
           currentTime := time.Now()
 
@@ -411,13 +413,19 @@ func PatroniWatch_k8s(patroni_config PatroniConfig, remote_command string, pgMan
 			}
 		  default:
 
-        start = time.Now()
+        // variables to handle exec time 
+        // and adjust the loop to match
+        // user's expectations
+        start := time.Now()
 
         //initiate error counter  
         err_count := 0
 
         // get primary pod's name
-        command_args := "/usr/bin/kubectl get pods --selector='" + patroni_config.K8s_selector + "' -o name"
+        command_args := "/usr/bin/kubectl get pods" 
+        command_args += " -n " + patroni_config.K8s_namespace
+        command_args += " --selector='" + patroni_config.K8s_selector+"'"
+        command_args += " -o name"
         cmd  := exec.Command("sh", "-c", command_args)
         out, err := cmd.CombinedOutput()
         if err != nil {
@@ -432,9 +440,9 @@ func PatroniWatch_k8s(patroni_config PatroniConfig, remote_command string, pgMan
             fmt.Printf(".")
             err_count = err_count + 1
             if err_count > 20 {
-              message := "Too many failures. Please carrefully check the following:\n"
-              message = message + "Error executing this command:\n"
-              message = message + "sh -c \"" + command_args + "\"\n" + string(out) + "\n"
+              message := "\nToo many failures. Please carrefully check the following:\n"
+              message += "Error executing this command:\n"
+              message += "sh -c \"" + command_args + "\"\n" + string(out) + "\n"
               exit1(message,err)
             }
           }
@@ -447,7 +455,10 @@ func PatroniWatch_k8s(patroni_config PatroniConfig, remote_command string, pgMan
         pod = strings.ReplaceAll(strings.TrimSpace(string(out)), "\n", "")  
         
         //get patronictl output from master pod 
-        command_args = "/usr/bin/kubectl exec -i -c database " + pod + " -- /bin/bash -c 'patronictl -c /etc/patroni/ " + patroni_config.Format + "'"
+        command_args =  "/usr/bin/kubectl "
+        command_args += " -n " + patroni_config.K8s_namespace
+        command_args += " exec -i -c database " + pod
+        command_args += " -- /bin/bash -c 'patronictl -c /etc/patroni/ " + patroni_config.Format + "'"
         cmd = exec.Command("sh","-c",command_args)
         out, err = cmd.CombinedOutput()
 
@@ -462,9 +473,9 @@ func PatroniWatch_k8s(patroni_config PatroniConfig, remote_command string, pgMan
             fmt.Printf(".")
             err_count = err_count + 1
             if err_count > 20 {
-              message := "Too many reconnect failures. Please carrefully check the following:\n"
-              message = message + "Error executing this command:\n"
-              message = message + "sh -c \"" + command_args + "\"\n" + string(out) + "\n"
+              message := "\nToo many reconnect failures. Please carrefully check the following:\n"
+              message += "Error executing this command:\n"
+              message += "sh -c \"" + command_args + "\"\n" + string(out) + "\n"
               exit1(message,err)
             }
           }
@@ -477,8 +488,8 @@ func PatroniWatch_k8s(patroni_config PatroniConfig, remote_command string, pgMan
           patroni_watch_timer = patroni_config.Watch_timer
 
           // Clears the screen
-          screen.Clear()
-          screen.MoveTopLeft()
+          fmt.Printf("\x1bc")
+
           fmt.Println()
           currentTime := time.Now()
     
@@ -490,7 +501,9 @@ func PatroniWatch_k8s(patroni_config PatroniConfig, remote_command string, pgMan
           if pgManager != nil {
               Replication_info(patroni_config.Replication_info, pgManager)
           }
-  
+ 
+          // it took actually that real_exec_time to execute that
+          // step in the main loop 
           real_exec_time :=  time.Since(start)
 
           //sleep for a computed time to match patroni_config.Watch_timer
@@ -502,8 +515,8 @@ func PatroniWatch_k8s(patroni_config PatroniConfig, remote_command string, pgMan
           // Watch_timer is something inferior to 1 : we run once only
   
           // Clears the screen
-          screen.Clear()
-          screen.MoveTopLeft()
+          fmt.Printf("\x1bc")
+
           fmt.Println()
           currentTime := time.Now()
 
@@ -531,7 +544,7 @@ func PatroniWatch() {
 
   if !( patroni_config.Format == "list" || patroni_config.Format ==  "topology") {
     message := "Error : value of Format in "+patroniconfigfilename.value+" must be either 'list' or 'topology' and it's actually set to '"+patroni_config.Format+"'"
-    message = message + "\nPlease set one or the other then run again"
+    message += "\nPlease set one or the other then run again"
     exit1(message,nil)
   }
 
@@ -550,7 +563,7 @@ func PatroniWatch() {
     //running localy with kubectl
     if _, err := os.Stat("/usr/bin/kubectl"); os.IsNotExist(err) {
       message := "kubectl is not present on this system. Please install it prior running"
-      message = message + "\npgSimload in Patroni-loop mode against a k8s env\n"
+      message += "\npgSimload in Patroni-loop mode against a k8s env\n"
       exit1(message,err)
     }
     mode = "k8s"

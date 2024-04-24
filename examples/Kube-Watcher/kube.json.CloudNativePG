@@ -1,0 +1,14 @@
+{
+    "Namespace"        : "cnpg-system", 
+    "Watch_timer"      : 2,
+    "Limiter_instance" : "cnpg.io/cluster",
+    "Pod_name"         : "NAME:.metadata.name",
+    "Pod_role"         : "ROLE:.metadata.labels.cnpg\\.io/instanceRole",
+    "Cluster_name"     : "CLUSTER:.metadata.labels.cnpg\\.io/cluster",
+    "Node_name"        : "NODE:.spec.nodeName",
+    "Pod_zone"         : "ZONE:.metadata.labels.topology\\.kubernetes\\.io/zone",
+    "Pod_status"       : "STATUS:status.conditions[?(@.status=='True')].type",
+    "Master_caption"   : "primary",
+    "Replica_caption"  : "replica",
+    "Down_caption"     : "<down>"
+}

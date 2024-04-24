@@ -11,6 +11,10 @@
   and the relevant parts in the documentation on how to use it !
 
   - TL,DR: simple as `pgSimload -kube <kube.json>`
+  
+  - Very special thanks to Brian Pace from Crunchy Data, since he
+    shared with me his how script that was doing that, exactly,
+    I found that it could be interesting to have it in pgSimload !
 
   - Special thanks to "Pierrick" from CloudNativePG Slack, that helped 
     me find the right labels and selectors for that operator to be used

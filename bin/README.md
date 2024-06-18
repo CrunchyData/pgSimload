@@ -13,10 +13,10 @@ You'll find here binaries for your convenience.
 
 ```
 md5sum pgSimload*
-955227f4d8ce90ad24ae0c3bcfaf4cde  pgSimload
-06e2593b109dce0dd4bb608c3a513696  pgSimload_mac
-ef46a6bf429a1e83748b7fe504069ee7  pgSimload_static
-d340bddca2cd3fce7b64faf3715adf9e  pgSimload_win.exe
+f545e77e2834c0a0adc5e8eae265e4aa  pgSimload
+cd50bdbadfde7dab8260f241f47f9b4e  pgSimload_mac
+202d8dc57168b7472fe7de25d1a37d27  pgSimload_static
+82c7e8ea39dcfa323a27e7cba4843223  pgSimload_win.exe
 ```
 
 # More information
@@ -29,13 +29,13 @@ If you're a Linux user, let me warn you that the binary has dependencies:
  
 ```
 $ ldd bin/pgSimload
-	linux-vdso.so.1 (0x00007ffd1fdcf000)
-	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x0000747478000000)
-	/lib64/ld-linux-x86-64.so.2 (0x000074747840e000)
+	linux-vdso.so.1 (0x00007ffec87e4000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007917a0a00000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007917a0da3000)
 ```
 
 Those depedencies would be OK if as an example you're using an up-to-date
-Ubuntu Mantic Minautor (aka Ubuntu 23.10) as per April 18th 2024.
+Ubuntu 24.04 LTS Noble Numbat as per June 18th 2024.
 
 But for any other machine without those versions of dependencies, please
 download and use instead the binary compiled *statically* for your convenience,

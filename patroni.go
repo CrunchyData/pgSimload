@@ -342,10 +342,11 @@ func PatroniWatch_ssh(patroni_config PatroniConfig, remote_command string, pgMan
           // Clears the screen
           fmt.Printf("\x1bc")
 
-          fmt.Println()
+          //useless new line... fmt.Println()
           currentTime := time.Now()
     
           fmt.Println("+ Patronictl output from host ", patroni_config.Remote_host, "at", currentTime.Format("2006.01.02 15:04:05"))
+          fmt.Println()
 
           //prints out the result of the patronictl list command 
           fmt.Println(patronictloutColorize(patronictlout))
@@ -370,11 +371,13 @@ func PatroniWatch_ssh(patroni_config PatroniConfig, remote_command string, pgMan
           // Clears the screen
           fmt.Printf("\x1bc")
 
-          fmt.Println()
+          //useless new line at start of screen 
+          //fmt.Println()
           currentTime := time.Now()
 
           fmt.Println("+ Patronictl output from host ", patroni_config.Remote_host, "at", currentTime.Format("2006.01.02 15:04:05"))
- 
+          fmt.Println()
+
           //prints out the result of the patronictl list command 
           fmt.Println(patronictloutColorize(patronictlout))
 
@@ -422,7 +425,7 @@ func PatroniWatch_k8s(patroni_config PatroniConfig, remote_command string, pgMan
         err_count := 0
 
         // get primary pod's name
-        command_args := "/usr/bin/kubectl get pods" 
+        command_args := "kubectl get pods" 
         command_args += " -n " + patroni_config.K8s_namespace
         command_args += " --selector='" + patroni_config.K8s_selector+"'"
         command_args += " -o name"
@@ -455,7 +458,7 @@ func PatroniWatch_k8s(patroni_config PatroniConfig, remote_command string, pgMan
         pod = strings.ReplaceAll(strings.TrimSpace(string(out)), "\n", "")  
         
         //get patronictl output from master pod 
-        command_args =  "/usr/bin/kubectl "
+        command_args =  "kubectl "
         command_args += " -n " + patroni_config.K8s_namespace
         command_args += " exec -i -c database " + pod
         command_args += " -- /bin/bash -c 'patronictl -c /etc/patroni/ " + patroni_config.Format + "'"
@@ -490,10 +493,13 @@ func PatroniWatch_k8s(patroni_config PatroniConfig, remote_command string, pgMan
           // Clears the screen
           fmt.Printf("\x1bc")
 
-          fmt.Println()
+          //useless new line at start of output
+          //fmt.Println()
+
           currentTime := time.Now()
     
           fmt.Println("+ Patronictl output from ", pod, "at", currentTime.Format("2006.01.02 15:04:05"))
+          fmt.Println()
 
           //prints out the result of the patronictl list command 
           fmt.Println(patronictloutColorize(patronictlout))
@@ -517,10 +523,12 @@ func PatroniWatch_k8s(patroni_config PatroniConfig, remote_command string, pgMan
           // Clears the screen
           fmt.Printf("\x1bc")
 
-          fmt.Println()
+          //useless newline at start of screen
+          // fmt.Println()
           currentTime := time.Now()
 
           fmt.Println("+ Patronictl output from ", pod, "at", currentTime.Format("2006.01.02 15:04:05"))
+          fmt.Println()
  
           //prints out the result of the patronictl list command 
           fmt.Println(patronictloutColorize(patronictlout))
@@ -560,10 +568,13 @@ func PatroniWatch() {
   //check if presence of required binary kubectl on the host
   //ssh binary not necessary, handled by golang directly
   if patroni_config.K8s_selector != "" {
-    //running localy with kubectl
-    if _, err := os.Stat("/usr/bin/kubectl"); os.IsNotExist(err) {
+
+    // try to run kubectl once to insure it is installed
+    cmd := exec.Command("kubectl")
+    err := cmd.Run()
+    if err != nil {
       message := "kubectl is not present on this system. Please install it prior running"
-      message += "\npgSimload in Patroni-loop mode against a k8s env\n"
+      message = message + "\npgSimload in Kube-watcher mode against a k8s env\n"
       exit1(message,err)
     }
     mode = "k8s"

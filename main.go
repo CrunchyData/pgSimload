@@ -34,7 +34,7 @@ var (
   exec_time                 time.Duration
   sleep_time                time.Duration
 
-  Version = "pgSimLoad v.1.3.0 - April 24th 2024"
+  Version = "pgSimLoad v.1.3.1 - June 18th 2024"
 
   License = heredoc.Doc(`
 **The PostgreSQL License**
@@ -199,22 +199,36 @@ func CheckFlags () {
     }
   } 
 
-  if !patroniconfigfilename.set {
-    if !kubeconfigfilename.set {
+  if !patroniconfigfilename.set && !kubeconfigfilename.set {
+  
+    //not in Patroni-Watcher mode.. 
+    //nor Kube-Watcher mode...
+    
+    //checking at least a config AND a script is present because that's
+    //SQL-Loop then... (default)
+
+    if !(scriptfilename.set || configfilename.set) {
       message := "Please read documentation in doc/ since parameters have to be passed"
       message += "\nAlternatively, run with -h to show all possible parameters"
-      if !configfilename.set {
-        message = message + "\n  -config is not set !"
-        exit1(message,nil)
-      }
-
-      if !scriptfilename.set {
-        message = message + "\n  -script is not set !"
+      exit1(message,nil)
+    }
+ 
+    if !scriptfilename.set {
+       if configfilename.set {
+         message := "You have set a config filename but no script filename (--script <SQL file>) !"
+         message += "\nPlease read documentation in doc/ and/or run with -h"
+         exit1(message,nil) 
+       }
+    }
+  
+    if !configfilename.set {
+      if scriptfilename.set {
+        message := "You have set a script filename but no config filename (--config <JSON file>) !"
+        message += "\nPlease read documentation in doc/ and/or run with -h"
         exit1(message,nil)
       }
     }
   }
-
 }
 
 func start_banner (mode string) {
@@ -229,7 +243,7 @@ func start_banner (mode string) {
       fmt.Println("=========================================================================")
       fmt.Print(string(colorGreen))
 
-    case "Patroni-Watcher","Kube-Watcher","SQL-loop": 
+    case "Patroni-Watcher","Kube-Watcher","SQL-Loop": 
 	    fmt.Println("About to start in "+mode+" mode")
       fmt.Print(string(colorReset))
       fmt.Println("=========================================================================")

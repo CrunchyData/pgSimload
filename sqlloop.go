@@ -50,7 +50,7 @@ func ExecCreate(pgManager *PGManager) {
 	  exit1("Could not open DDL script:\n" , err)
   }
 
-  fmt.Println("\nExecuting DDL Script :")
+  fmt.Println("Executing DDL Script :")
 
   // defer the closing of our jsonFile so that we can parse it later on
   defer create_ddl_file.Close()
@@ -102,6 +102,7 @@ func ExecCreate(pgManager *PGManager) {
   fmt.Print(string(colorGreen))
   fmt.Printf("   Script %q successfully executed !\n",createfilename.value)
   fmt.Print(string(colorReset))
+  fmt.Println()
 }
 
 func SetSessionParameters(pgManager *PGManager) {
@@ -165,6 +166,7 @@ func SetSessionParameters(pgManager *PGManager) {
     fmt.Print(string(colorGreen))
     fmt.Printf("   Session parameters applied to the PG session !\n")
     fmt.Print(string(colorReset))
+    fmt.Println()
   }
 }
 
@@ -198,7 +200,6 @@ func do_sqlloop(pgManager *PGManager) {
     message += "\nPlease correct the errors prior running pgSimload."
     exit1(message,nil)
   } else {
-	  fmt.Println()
   
     if sleep_time > 0 {
       fmt.Printf("Now entering the main loop, executing script %q each %q\n",scriptfilename.value, sleep_time) 
@@ -407,6 +408,15 @@ func SQLLoop () {
   defer conn.Close(context.Background())
 
   //fmt.Println("DEBUG: Connected to PG!")
+
+  // time to clear the screen to remove the licence
+  // etc...
+  // Clears the screen
+  fmt.Printf("\x1bc")
+
+  currentTime := time.Now()
+  fmt.Println("+ SQL-Loop at", currentTime.Format("2006.01.02 15:04:05"))
+  fmt.Println()
 
   if sessiongucsfilename.set {
     SetSessionParameters(pgManager)

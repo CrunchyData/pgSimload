@@ -1,5 +1,27 @@
 # Release notes
 
+
+## Version 1.3.1 (June 18th 2024)
+
+### Major changes
+
+None, this is maintenance release.
+
+### Minor changes
+
+- Some captions revisited for better understanding by the user, and to be
+  consistent. Particularly true for the "SQL-Loop" mode where the start 
+  process was different
+
+- Corrected some startup tests when mandatory files are not passed in the
+  command line
+
+- Corrected a bug when `kubectl` wasn't installed on default directories.
+  This was preventing users to have installs like `/usr/local/bin/kubectl`.
+  Now, `kubectl` can be anywhere in the `$PATH` of the user 
+
+- re-Build of binaries to update underlying dependencies
+
 ## Version 1.3.0 (April 24th 2024)
 
 ### Major changes

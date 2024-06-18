@@ -86,7 +86,7 @@ func KubeWatch_k8s(kube_config KubeConfig) {
         start := time.Now()
 
         //build the main kube command
-        command_args := "/usr/bin/kubectl get pods --no-headers"
+        command_args := "kubectl get pods --no-headers"
         command_args += " -n '" + kube_config.Namespace+"'"
         command_args += " -l '" + kube_config.Limiter_instance+"'"
         command_args += " -o custom-columns=\""
@@ -151,7 +151,7 @@ func KubeWatch_k8s(kube_config KubeConfig) {
 
           //(worker)node = record[3]
  
-          command_args := "/usr/bin/kubectl get node --no-headers " + record[3]
+          command_args := "kubectl get node --no-headers " + record[3]
           command_args += " -o custom-columns=\""+kube_config.Pod_zone+","+kube_config.Pod_status+"\""
           cmd  := exec.Command("sh", "-c", command_args)
  
@@ -219,7 +219,7 @@ func KubeWatch_k8s(kube_config KubeConfig) {
           record := records[i]
           if (previouscluster != record[2]) {
             output = output + "\n"
-            output = output + "Cluster : "+ record[2] + "\n"
+            output = output + "+ Cluster : "+ record[2] + "\n"
           }
           
           previouscluster = record[2]
@@ -266,6 +266,8 @@ func KubeWatch_k8s(kube_config KubeConfig) {
             
           podname = record[0]
 
+          //line starts with 2 empty spaces
+          output += "  " 
           output += PadRight(podname, " ", longest)
           output += zone + button + role + "\n"
         }
@@ -323,8 +325,10 @@ func KubeWatch() {
   // read the config JSON of the Kube watcher mode
   kube_config := ReadKubeConfig ()
 
-  //check if presence of required binary kubectl on the host
-  if _, err := os.Stat("/usr/bin/kubectl"); os.IsNotExist(err) {
+  // try to run kubectl once to insure it is installed
+  cmd := exec.Command("kubectl")
+  err := cmd.Run()
+  if err != nil {
     message := "kubectl is not present on this system. Please install it prior running"
     message = message + "\npgSimload in Kube-watcher mode against a k8s env\n"
     exit1(message,err)

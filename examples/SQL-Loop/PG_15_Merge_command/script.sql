@@ -1,8 +1,10 @@
 begin;
+
 truncate table test.station_data_new;
+
 with measures as (
   select *
-  from generate_series(round(random()*100+1)::integer,round(random()*100)::integer+10)
+  from generate_series(round(random()*1000+1)::integer,round(random()*1000)::integer+100)
 )
 insert into test.station_data_new (
     station_id
@@ -11,10 +13,11 @@ insert into test.station_data_new (
 )
 select
     generate_series
-  , round(random()*100+1)
-  , round(random()*100+1)
+  , round(random()*1000+1)
+  , round(random()*1000+1)
 from
   measures;
+
 merge into test.station_data_actual sda
 using test.station_data_new sdn
 on sda.station_id = sdn.station_id
@@ -32,4 +35,5 @@ when matched then
 when not matched then
   insert (station_id, a, b, updated)
   values (sda.station_id, sda.a, sda.b, sda.updated);
+
 commit;

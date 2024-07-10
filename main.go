@@ -34,7 +34,7 @@ var (
   exec_time                 time.Duration
   sleep_time                time.Duration
 
-  Version = "pgSimLoad v.1.3.1 - June 18th 2024"
+  Version = "pgSimLoad v.1.3.2 - July 10th 2024"
 
   License = heredoc.Doc(`
 **The PostgreSQL License**

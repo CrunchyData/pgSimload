@@ -76,12 +76,12 @@ func patronictloutColorize(input string) string {
   m := regexp.MustCompile("Leader")
   n := regexp.MustCompile("Replica")
   o := regexp.MustCompile("Sync Standby")
-  p := regexp.MustCompile("Standby Leader")
+  p := regexp.MustCompile("Standby")
 
   leader     := "${1}"+string(colorRed)   +"Leader"         + string(colorReset)+"$2"
   replica    := "${1}"+string(colorCyan)  +"Replica"        + string(colorReset)+"$2"
   sync_stdby := "${1}"+string(colorGreen) +"Sync Standby"   + string(colorReset)+"$2"
-  stdby_lead := "${1}"+string(colorGreen) +"Standby Leader" + string(colorReset)+"$2"
+  stdby_lead := "${1}"+string(colorRed) +"Standby" + string(colorReset)+"$2"
  
   output := m.ReplaceAllString(input, leader)
   output  = n.ReplaceAllString(output, replica)
@@ -345,7 +345,7 @@ func PatroniWatch_ssh(patroni_config PatroniConfig, remote_command string, pgMan
           //useless new line... fmt.Println()
           currentTime := time.Now()
     
-          fmt.Println("+ Patronictl output from host ", patroni_config.Remote_host, "at", currentTime.Format("2006.01.02 15:04:05"))
+          fmt.Println("+ Patronictl output from host", patroni_config.Remote_host, "at", currentTime.Format("2006.01.02 15:04:05"))
           fmt.Println()
 
           //prints out the result of the patronictl list command 
@@ -375,7 +375,7 @@ func PatroniWatch_ssh(patroni_config PatroniConfig, remote_command string, pgMan
           //fmt.Println()
           currentTime := time.Now()
 
-          fmt.Println("+ Patronictl output from host ", patroni_config.Remote_host, "at", currentTime.Format("2006.01.02 15:04:05"))
+          fmt.Println("+ Patronictl output from host", patroni_config.Remote_host, "at", currentTime.Format("2006.01.02 15:04:05"))
           fmt.Println()
 
           //prints out the result of the patronictl list command 
@@ -421,9 +421,6 @@ func PatroniWatch_k8s(patroni_config PatroniConfig, remote_command string, pgMan
         // user's expectations
         start := time.Now()
 
-        //initiate error counter  
-        err_count := 0
-
         // get primary pod's name
         command_args := "kubectl get pods" 
         command_args += " -n " + patroni_config.K8s_namespace
@@ -431,60 +428,38 @@ func PatroniWatch_k8s(patroni_config PatroniConfig, remote_command string, pgMan
         command_args += " -o name"
         cmd  := exec.Command("sh", "-c", command_args)
         out, err := cmd.CombinedOutput()
+
         if err != nil {
           //we can't connect to the master pod to grab information 
           //because probably there's a failover/swichover ongoing...
-          fmt.Println("+ Failover or switchover in progress ?")
-          fmt.Println("+ Waiting for Master pod to be up every second for 20s max")
-          for err != nil  {
-            time.Sleep(1000 * time.Millisecond)
-            cmd := exec.Command("sh", "-c", command_args)
-            out, err := cmd.CombinedOutput()
-            fmt.Printf(".")
-            err_count = err_count + 1
-            if err_count > 20 {
-              message := "\nToo many failures. Please carrefully check the following:\n"
-              message += "Error executing this command:\n"
-              message += "sh -c \"" + command_args + "\"\n" + string(out) + "\n"
-              exit1(message,err)
-            }
-          }
+          message := "An error happened while trying to get the Primary's pod name"
+          message += "\nError executing this command:\n"
+          message += "sh -c \"" + command_args + "\"\n" + string(out) + "\n"
+          exit1(message, err)
         }
-
-        //reinitiate error counter in case we face new errors
-        err_count = 0
 
         //no (more) error, we can continue
         pod = strings.ReplaceAll(strings.TrimSpace(string(out)), "\n", "")  
+
+        //maybe the pod is not up! In such case, pod is an empty string !
+        if pod == "" { 
+          patronictlout = "+ Primary PostgreSQL pod is not up yet"
+        } else {
         
-        //get patronictl output from master pod 
-        command_args =  "kubectl "
-        command_args += " -n " + patroni_config.K8s_namespace
-        command_args += " exec -i -c database " + pod
-        command_args += " -- /bin/bash -c 'patronictl -c /etc/patroni/ " + patroni_config.Format + "'"
-        cmd = exec.Command("sh","-c",command_args)
-        out, err = cmd.CombinedOutput()
+          //get patronictl output from master pod 
+          command_args =  "kubectl "
+          command_args += " -n " + patroni_config.K8s_namespace
+          command_args += " exec -i -c database " + pod
+          command_args += " -- /bin/bash -c 'patronictl -c /etc/patroni/ " + patroni_config.Format + "'"
+          cmd = exec.Command("sh","-c",command_args)
+          out, err = cmd.CombinedOutput()
 
-	      if err != nil {
-          //the patroni isn't answering *yet* on the (new) Primary pod
-	        //so we iterate until it does, or exit after 20 retries
-          fmt.Println("+ Waiting for patronictl answer from Master every second for 20s max")
-          for err != nil  {
-            time.Sleep(1000 * time.Millisecond)
-            cmd = exec.Command("sh","-c",command_args)
-            out, err = cmd.CombinedOutput()
-            fmt.Printf(".")
-            err_count = err_count + 1
-            if err_count > 20 {
-              message := "\nToo many reconnect failures. Please carrefully check the following:\n"
-              message += "Error executing this command:\n"
-              message += "sh -c \"" + command_args + "\"\n" + string(out) + "\n"
-              exit1(message,err)
-            }
-          }
-	      }
-
-        patronictlout = string(out)
+	        if err != nil {
+            //the patroni isn't answering *yet* on the (new) Primary pod
+            fmt.Println("+ Waiting for patronictl answer from Primary")
+	        }
+          patronictlout = string(out)
+        }
 
         if patroni_config.Watch_timer > 1 {
 
@@ -493,13 +468,15 @@ func PatroniWatch_k8s(patroni_config PatroniConfig, remote_command string, pgMan
           // Clears the screen
           fmt.Printf("\x1bc")
 
-          //useless new line at start of output
-          //fmt.Println()
-
           currentTime := time.Now()
-    
-          fmt.Println("+ Patronictl output from ", pod, "at", currentTime.Format("2006.01.02 15:04:05"))
-          fmt.Println()
+   
+          if pod=="" { 
+            fmt.Println("+ Patronictl output at", currentTime.Format("2006.01.02 15:04:05"))
+            fmt.Println()
+          } else {
+            fmt.Println("+ Patronictl output from", pod, "at", currentTime.Format("2006.01.02 15:04:05"))
+            fmt.Println()
+          }
 
           //prints out the result of the patronictl list command 
           fmt.Println(patronictloutColorize(patronictlout))
@@ -527,8 +504,13 @@ func PatroniWatch_k8s(patroni_config PatroniConfig, remote_command string, pgMan
           // fmt.Println()
           currentTime := time.Now()
 
-          fmt.Println("+ Patronictl output from ", pod, "at", currentTime.Format("2006.01.02 15:04:05"))
-          fmt.Println()
+          if pod=="" {
+            fmt.Println("+ Patronictl output at", currentTime.Format("2006.01.02 15:04:05"))
+            fmt.Println()
+          } else {
+            fmt.Println("+ Patronictl output from", pod, "at", currentTime.Format("2006.01.02 15:04:05"))
+            fmt.Println()
+          }
  
           //prints out the result of the patronictl list command 
           fmt.Println(patronictloutColorize(patronictlout))

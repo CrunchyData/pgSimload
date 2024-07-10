@@ -1,11 +1,34 @@
 # Release notes
 
+## Version 1.3.2 (July 10th 2024)
+
+### Major changes
+
+None, this is a maintenance release.
+
+### Minor changes
+
+- Fixed a bug in coloring patronictl (list|topology) command between
+  "Leader" and "Standby Leader", now both are in red
+
+- Fixed useless waiting loops in Patroni Watcher command, in the 
+  Kubernetes flavor. It's now more robust to what could happen inside 
+  the Kubernetes cluster. 
+
+- Fixed caption in "Patronictl output from...", there was too many
+  spaces in there
+
+- re-Build of binaries to update underlying dependencies:
+ 
+  - upgraded golang.org/x/crypto v0.24.0 => v0.25.0
+
+  - upgraded golang.org/x/sys v0.21.0 => v0.22.0
 
 ## Version 1.3.1 (June 18th 2024)
 
 ### Major changes
 
-None, this is maintenance release.
+None, this is a maintenance release.
 
 ### Minor changes
 

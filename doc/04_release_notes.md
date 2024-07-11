@@ -8,6 +8,10 @@ None, this is a maintenance release.
 
 ### Minor changes
 
+- Reviewed output of "Replication information" in the Patroni 
+  Watcher mode, a bit less things, but, clearer and complete 
+  presentation of what's important
+
 - Fixed a bug in coloring patronictl (list|topology) command between
   "Leader" and "Standby Leader", now both are in red
 

@@ -22,31 +22,25 @@ var (
   patronictlout             string = ""
   pod                       string = ""
 
-  replication_info_query = heredoc.Doc(`
-select                            
-    3
-    ,'GUC'
-    ,rpad(name,32)
-    ,rpad(current_setting(name),72)
+  rep_info_replicas = heredoc.Doc(`
+  select
+      rpad(application_name,32) as pod
+    , rpad(sync_state,18) as role
+    , (SELECT rpad(timeline_id::text,5) FROM pg_control_checkpoint()) as tl
+    , rpad(coalesce('Write lag  : '||write_lag,'No write lag'),32) as lag
+  from
+    pg_stat_replication
+  order by 1,2;
+  `)
+
+
+  rep_info_gucs = heredoc.Doc(`
+    select
+        rpad(name,32)                 as name
+      , current_setting(name)         as setting
     from
       pg_settings where name in (XXX)
-  UNION
-  select 
-    2
-    ,rpad((application_name||' Replica (TL:'||(SELECT timeline_id FROM pg_control_checkpoint())||')'),32)
-    ,rpad('Sync state : '||sync_state,37)
-    ,rpad(coalesce('Write lag  : '||write_lag,'No write lag'),32)
-  from  
-    pg_stat_replication
-  UNION 
-  select 
-    1
-,rpad(regexp_replace(pg_read_file('/etc/hostname'), '\r|\n', '',
-'g')::text||(case when pg_is_in_recovery() then ' Replica ' else ' Leader  '
-end)||'(TL:'||(SELECT timeline_id FROM pg_control_checkpoint())||')',32)
-    ,rpad('Started : '||(to_char(pg_postmaster_start_time(),'YYYY-MM-DD HH24:MI:SS (TZ)')),37)
-    ,rpad('Uptime : '||age(current_timestamp,pg_postmaster_start_time()),32)
-  order by 1,2,3;
+    order by 1;
   `)
 )
 
@@ -177,7 +171,54 @@ func Replication_info(user_gucs string, pgManager *PGManager) {
 
   flag.Parse()
 
-  //replication_info_query is a declared constant, containing XXX
+  //SHOW REPLICA(s) INFO
+
+  rows, _ := pgManager.conn.Query(context.Background(), rep_info_replicas)
+   
+  defer rows.Close()
+
+  
+  output  = "+ Replica(s) information ----------+--------------------+-------+----------------------------------+\n"
+  output += "| Member                           | Role               | TL    | Lag                              |\n"
+  output += "+----------------------------------+--------------------+-------+----------------------------------+\n"
+
+  row_count := 0
+ 
+  for rows.Next() {
+    var column1 string
+    var column2 string
+    var column3 string
+    var column4 string
+
+    err := rows.Scan(&column1, &column2, &column3, &column4)
+
+    if err != nil {
+      exit1("Error retrieving Leader info:\n",err)
+    }
+
+    row_count++
+
+    output += "| "  + column1 
+    output += " | " + column2
+    output += " | " + column3 
+    output += " | " + column4 + " |\n"
+    
+  }
+
+  if row_count > 0 {
+    output += "+----------------------------------+--------------------+-------+----------------------------------+\n"
+    fmt.Println(output)
+  } else { 
+      fmt.Print(string(colorRed))
+      fmt.Printf("\nPostgreSQL not responding... Probable failover in progress ?...\n")
+      fmt.Print(string(colorReset))
+  }
+
+  rows.Close()
+
+  //SHOW GUCS
+
+  //rep_info_gucs is a declared constant, containing XXX
   //string to be replaced by actual content of user setting in the
   //patroni.json file
  
@@ -207,58 +248,49 @@ func Replication_info(user_gucs string, pgManager *PGManager) {
     add_simple_quotes_replace_pattern := "'$0'"
     gucs = m.ReplaceAllString(user_gucs, add_simple_quotes_replace_pattern)
 
-  }
+    // replace the "XXX" in the replication_info_query string to put there
+    // the GUCS the user want to be shown... or '' if it's "nogucs" so 
+    // nothing is sent back (default values of '' to gucs applies then..)
+    n := regexp.MustCompile("XXX")
+    gucs = "${1}"+ gucs + "$2"
+    query := n.ReplaceAllString(rep_info_gucs, gucs)
 
-  // replace the "XXX" in the replication_info_query string to put there
-  // the GUCS the user want to be shown... or '' if it's "nogucs" so 
-  // nothing is sent back (default values of '' to gucs applies then..)
-  n := regexp.MustCompile("XXX")
-  gucs = "${1}"+ gucs + "$2"
-  query := n.ReplaceAllString(replication_info_query, gucs)
+    rows, _ = pgManager.conn.Query(context.Background(), query)
 
-  rows, _ := pgManager.conn.Query(context.Background(), query)
+    defer rows.Close()
 
-  defer rows.Close()
+    //DEBUG 
+    //fmt.Println("DEBUG : Replication info query is :",replication_info_query)
 
-  //DEBUG 
-  //fmt.Println("DEBUG : Replication info query is :",replication_info_query)
+    output = "+ GUCs information\n"
 
-  output := "+ Replication information\n"
-  output += "+----------------------------------+---------------------------------------+----------------------------------+\n"
+    for rows.Next() {
+      var column1 string
+      var column2 string
 
-  row_count := 0
- 
-  for rows.Next() {
-    var column0 int
-    var column1 string
-    var column2 string
-    var column3 string
+      err := rows.Scan(&column1, &column2)
 
-    err := rows.Scan(&column0,&column1, &column2, &column3) 
+      if err != nil {
+        exit1("Error retrieving GUCs info:\n",err)
+      }
 
-    if err != nil {
-      exit1("Error retrieving replication info:\n",err)
+      row_count++
+
+      output = output + " + " + column1 + " : " + column2 + "\n"
+    
     }
 
-    row_count++
-
-    if column1 != "GUC" {
-      output = output + "| " + column1 + " | " + column2 + " | " + column3 + " |\n"
-    } else {
-      output = output + "| " + column2 + " | " + column3 + " |\n"
+    if row_count > 0 {
+      fmt.Println(output)
+    } else { 
+        fmt.Print(string(colorRed))
+        fmt.Printf("\nPostgreSQL not responding... Probable failover in progress ?...\n")
+        fmt.Print(string(colorReset))
     }
-  }
 
-  if row_count > 0 {
-    output = output + "+----------------------------------+---------------------------------------+----------------------------------+\n"
-    fmt.Println(output)
-  } else { 
-      fmt.Print(string(colorRed))
-      fmt.Printf("\nPostgreSQL not responding... Probable failover in progress ?...\n")
-      fmt.Print(string(colorReset))
-  }
+    rows.Close()
 
-  rows.Close()
+  } // End of    if user_gucs != "nogucs" {
 
 }
 

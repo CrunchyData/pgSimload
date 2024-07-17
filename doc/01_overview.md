@@ -28,8 +28,8 @@ This is very straightforward if you have Go installed on your system.
 You can run the tool with Go from the main directory of the project like:
 
 ```code
-$ go run . <parameters...>
-$ go run . -h
+go run . <parameters...>
+go run . -h
 ```
 
 ## Using binaries provided
@@ -48,7 +48,7 @@ You can use the provided script
 [build.sh](https://github.com/CrunchyData/pgSimload/blob/master/build.sh).
 
 ```code 
-$ sh build.sh
+sh build.sh
 ```
 
 ## DEB and RPM packages

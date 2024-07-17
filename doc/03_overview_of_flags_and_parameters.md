@@ -78,7 +78,7 @@ special tricks to get the `hostname` of the PostgreSQL primary server.
 `ps aux | grep [p]gSimload` on any of the PostgreSQL server to isolate the
 process pgSimload uses... Or for any other SQL / bash command.
 
-As per version 0.6 (June 2023), a valid `config.json` looks like this:
+A valid `config.json` looks like this:
 
 ```code
 {
@@ -381,10 +381,11 @@ I've added 2 samples JSON configurations you may even not have to change:
   - `examples/Kube-Watcher/kube.json.CloudNativePG` is the one to be used
     for any CloudNativePG PostgreSQL cluster
 
-Let's present that JSON with the PGO version: only the values will differ:
+Let's present that JSON with the PGO version: only the values will differ.
+
+An example file is given in `examples/Kube-Watcher/kube.json.PGO`:
 
 ```code
-$ cat examples/Kube-Watcher/kube.json.PGO
 {
     "Namespace"        : "postgres-operator", 
     "Watch_timer"      : 2,
@@ -486,10 +487,10 @@ Note that the name doesn't matter much, you can name the way you want.
 When this paramter is set (`-patroni <patroni.json>`), you're asking pgSimload
 to run in Patroni-Watcher mode. This parameter is used to give to the tool
 the relative or complete path to a JSON file formated like the following
-example you can find a copy in `examples/Patroni-Watcher/` subdirectories: 
+example you can find a copy with the file
+`examples/Patroni-Watcher/patroni.json`:
 
 ```code 
-$ cat patroni.json 
 {
     "Cluster"          : "mycluster", 
     "Remote_host"      : "u20-pg1",
@@ -636,10 +637,10 @@ current PostgreSQL primary is executing into, and you're running Crunchy
 Postgres for Kubernetes, that could be done with the following command:
 
 ```code
-$ kubectl get pods \
-    -n postgres-operator \
-    --selector='postgres-operator.crunchydata.com/cluster=hippo,postgres-operator.crunchydata.com/role=master' \
-    -o name 
+kubectl get pods \
+  -n postgres-operator \
+  --selector='postgres-operator.crunchydata.com/cluster=hippo,postgres-operator.crunchydata.com/role=master' \
+  -o name 
 ```
 
 So pgSimload knows the pod where the Primary PostgreSQL server is running.

@@ -1,5 +1,21 @@
 # Release notes
 
+## ACTUAL DEV
+
+### Major changes
+
+None, this is (will be) a maintenance release. 
+
+### Minor changes
+
+- Reviewed the way the documentation is produced with internal 
+  script (not on git). Had to change main.go to have `Version`
+  and `Release_date` on separated variables
+
+- Removed `$` in `$ command <exemples>` so the reader can copy/paste
+  the code directly reading the documentation on github. So it is a 
+  better user experience
+
 ## Version 1.3.2 (July 10th 2024)
 
 ### Major changes

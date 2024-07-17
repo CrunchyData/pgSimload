@@ -25,6 +25,9 @@ GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/pgSimload
 
 #  --ldflags '-linkmode external -extldflags "-static"' 
 
+
+
+
 echo "----------------------------------------------------------------------"
 echo "This script can copy the binary to /usr/local/bin if you want"
 echo "It assumes user "`whoami`" is sudoer..."

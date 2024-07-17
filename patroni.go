@@ -22,6 +22,10 @@ var (
   patronictlout             string = ""
   pod                       string = ""
 
+  are_we_primary = heredoc.Doc(`
+    select pg_is_in_recovery();
+  `)
+
   rep_info_replicas = heredoc.Doc(`
   select
       rpad(application_name,32) as pod
@@ -609,10 +613,42 @@ func PatroniWatch() {
     // Initial connection
     conn, err := pgManager.PGConnect()
     if err != nil {
-      //we won't try to reconnect here, since GUCS generation file
-      //is an unitary operation...
       exit1("Failed to connect to PostgreSQL:\n", err)
     }
+
+    // we tests wether we're on A PRIMARY or not
+    //
+    // We are here because the user wants to show some more
+    // information about replication. This will query 
+    // pg_stat_replication. This system table is ONLY filed on
+    // the primary. So if that query is run against replica(s),
+    // it will return 0 tuples. Since the code here assumes that
+    // when it's 0 tuples returned, that's because of a fail over
+    // we want to test it PRIOR entering the loop !
+
+    rows, _ := pgManager.conn.Query(context.Background(), are_we_primary)
+
+    defer rows.Close()
+  
+    for rows.Next() {
+      var column1 bool
+      err := rows.Scan(&column1)
+    
+      if err != nil {  
+        exit1("Error while retriving pg_is_in_recovery() info on connexion\n",err)
+      }
+   
+      if column1 == true {
+        message := "You apparently want to retrive replication information\n"
+        message += "But your config.json points to a NON Primary PostgreSQL server.\n"
+        message += "Please correct this before launching pgSimload again,\n"
+        message += "since it's mandatory for this feature."
+        exit1(message, err)
+      }
+    }
+      
+    rows.Close()
+
     defer conn.Close(context.Background())
 
     if mode == "ssh" {

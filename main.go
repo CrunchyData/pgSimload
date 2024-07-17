@@ -34,7 +34,8 @@ var (
   exec_time                 time.Duration
   sleep_time                time.Duration
 
-  Version = "pgSimLoad v.1.3.2 - July 10th 2024"
+  Version      = "v.1.3.2"
+  Release_date = "July 10th 2024"
 
   License = heredoc.Doc(`
 **The PostgreSQL License**
@@ -164,13 +165,13 @@ func CheckFlags () {
 
   if *version {
 		_ = keyboard.Close()
-    fmt.Printf("%s\n",Version);
+    fmt.Printf("pgSimload %s - %s\n",Version,Release_date);
     os.Exit(0);
   }
    
   if *license {
 		_ = keyboard.Close()
-    fmt.Printf("%s is licensed under \n",Version);
+    fmt.Printf("pgSimload %s - %s is licensed under \n",Version,Release_date);
     fmt.Printf("%s\n",License);
     os.Exit(0);
   }
@@ -239,7 +240,7 @@ func start_banner (mode string) {
       fmt.Println(string(colorReset))
       fmt.Printf("%s\n",License_short_notice)
       fmt.Println("=========================================================================")
-      fmt.Println("Welcome to ",Version)
+      fmt.Println("Welcome to pgSimload ",Version)
       fmt.Println("=========================================================================")
       fmt.Print(string(colorGreen))
 

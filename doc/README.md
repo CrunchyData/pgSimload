@@ -1,4 +1,4 @@
-# Documentation sections
+# pgSimload v.1.3.2 documentation
 
 ## [Overview](01_overview.md)
 
@@ -9,3 +9,4 @@
 ## [Release notes](04_release_notes.md)
 
 ## [Roadmap](05_roadmap.md)
+

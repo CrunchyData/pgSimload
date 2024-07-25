@@ -3,6 +3,11 @@
 You can find several examples of usage in the main directory of the project
 under `examples/`.
 
+Note that since version 1.3.3, if you want to get rid of the welcome message
+banner at the start of pgSimload, you can add the parameter `-silent` to each
+of the examples expressed down here. If you do so, please remember that
+pgSimload can be exited any time by pressing the `ESC` key.
+
 ## `examples/SQL-Loop/simple/`
 
 This example is the simpliest example of the SQL-Loop mode!

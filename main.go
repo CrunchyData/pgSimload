@@ -33,6 +33,7 @@ var (
   exec_loops                int64 = 0
   exec_time                 time.Duration
   sleep_time                time.Duration
+  silent_start              bool 
 
   Version      = "v.1.3.2"
   Release_date = "July 10th 2024"
@@ -160,6 +161,7 @@ func CheckFlags () {
   version := flag.Bool("version", false, "display version")
   license := flag.Bool("license", false, "display license")
   contact := flag.Bool("contact", false, "display where to contact programmers")  
+  silent  := flag.Bool("silent",  false, "don't display start banner")
 
   flag.Parse()
 
@@ -186,6 +188,10 @@ func CheckFlags () {
 		_ = keyboard.Close()
     fmt.Println("Please read documentation in doc/\nAlternatively, run with -h to show all possible parameters.");
     os.Exit(0);
+  } 
+
+  if *silent {
+    silent_start = true
   } 
 
   if gathergucsfilename.set {
@@ -229,28 +235,22 @@ func CheckFlags () {
         exit1(message,nil)
       }
     }
+
   }
 }
 
 func start_banner (mode string) {
-
-  switch (mode) {
-
-    case "start":
-      fmt.Println(string(colorReset))
-      fmt.Printf("%s\n",License_short_notice)
-      fmt.Println("=========================================================================")
-      fmt.Println("Welcome to pgSimload ",Version)
-      fmt.Println("=========================================================================")
-      fmt.Print(string(colorGreen))
-
-    case "Patroni-Watcher","Kube-Watcher","SQL-Loop": 
-	    fmt.Println("About to start in "+mode+" mode")
-      fmt.Print(string(colorReset))
-      fmt.Println("=========================================================================")
-  	  fmt.Println("Hit <Enter> to Start")
-	    fmt.Println("Hit <Esc> to Exit/Stop anytime after")
-  }
+  fmt.Println(string(colorReset))
+  fmt.Printf("%s\n",License_short_notice)
+  fmt.Println("=========================================================================")
+  fmt.Println("Welcome to pgSimload ",Version)
+  fmt.Println("=========================================================================")
+  fmt.Print(string(colorGreen))
+	fmt.Println("About to start in "+mode+" mode")
+  fmt.Print(string(colorReset))
+  fmt.Println("=========================================================================")
+  fmt.Println("Hit <Enter> to Start")
+	fmt.Println("Hit <Esc> to Exit/Stop anytime after")
 }
 
 
@@ -260,81 +260,98 @@ func main() {
 
   CheckFlags() 
 
-  //prints out the start banner
-  start_banner("start")
+  //open keyboard
+	if err := keyboard.Open(); err != nil {
+    exit1("Error:\n",err)
+	}
 
   if patroniconfigfilename.set {
+
+    if silent_start {
+      
+      //silent start
+      PatroniWatch()
+    
+    } else {
  
-    //adds info to start banner: we're starting in Patroni-monitoring mode
-    start_banner("Patroni-Watcher")
+      //adds info to start banner: we're starting in Patroni-monitoring mode
+      start_banner("Patroni-Watcher")
 
-	  // Wait for Enter or Esc Key
-	  if err := keyboard.Open(); err != nil {
-      exit1("Error:\n",err)
-	  }
-
-    for {
-      _, key, err := keyboard.GetKey()
-      if err != nil {
-        exit1("Error:\n",err)
-      }
-      if key == keyboard.KeyEsc {
-        break
-      } else if key == keyboard.KeyEnter {
-        PatroniWatch()
-        _ = keyboard.Close()
-        break
+      //Wait for key
+      // - ESC will cancel the execution
+      // - ENTER will start the execution
+      for {
+        _, key, err := keyboard.GetKey()
+        if err != nil {
+          exit1("Error:\n",err)
+        }
+        if key == keyboard.KeyEsc {
+          break
+        } else if key == keyboard.KeyEnter {
+          PatroniWatch()
+          break
+        }
       }
     }
 
   } else if kubeconfigfilename.set {
 
-    //adds info to start banner: we're starting in Kube-watcher mode
-    start_banner("Kube-Watcher")
 
-	  // Wait for Enter or Esc Key
-	  if err := keyboard.Open(); err != nil {
-      exit1("Error:\n",err)
-	  }
+    if silent_start {
 
-    for {
-      _, key, err := keyboard.GetKey()
-      if err != nil {
-        exit1("Error:\n",err)
-      }
-      if key == keyboard.KeyEsc {
-        break
-      } else if key == keyboard.KeyEnter {
-        KubeWatch()
-        _ = keyboard.Close()
-        break
+      //silient start 
+      KubeWatch()
+
+    } else {
+ 
+      //adds info to start banner: we're starting in Kube-watcher mode
+      start_banner("Kube-Watcher")
+  
+      //Wait for key
+      // - ESC will cancel the execution
+      // - ENTER will start the execution
+      for {
+        _, key, err := keyboard.GetKey()
+        if err != nil {
+          exit1("Error:\n",err)
+        }
+        if key == keyboard.KeyEsc {
+          break
+        } else if key == keyboard.KeyEnter {
+          KubeWatch()
+          break
+        }
       }
     }
 
   } else {
 
-    //adds info to start banner: we're starting in SQL-loop  mode
-    start_banner("SQL-Loop")
+    if silent_start {
+      
+      //silent start
+      SQLLoop()
 
-	  // Wait for Enter or Esc Key
-	  if err := keyboard.Open(); err != nil {
-      exit1("Error:\n",err)
-	  }
+    } else {
 
-	  for {
-		  _, key, err := keyboard.GetKey()
-		  if err != nil {
-			  //exit1("Error:\n",err)
-		  }
-		  if key == keyboard.KeyEsc {
-			  break
-		  } else if key == keyboard.KeyEnter {
-   
-	      fmt.Println("")
-        SQLLoop()
-			  break
-		  }
-	  }
+      //adds info to start banner: we're starting in SQL-loop  mode
+      start_banner("SQL-Loop")
+
+      //Wait for key
+      // - ESC will cancel the execution
+      // - ENTER will start the execution
+	    for {
+	  	  _, key, err := keyboard.GetKey()
+	  	  if err != nil {
+  			  exit1("Error:\n",err)
+	  	  }
+		    if key == keyboard.KeyEsc {
+		  	  break
+		    } else if key == keyboard.KeyEnter {
+          SQLLoop()
+		  	  break
+		    }
+	    }  
+    }
   }
   _ = keyboard.Close()
 }

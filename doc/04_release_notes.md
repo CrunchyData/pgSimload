@@ -1,10 +1,14 @@
 # Release notes
 
-## ACTUAL DEV
+## ACTUAL DEV (Version 1.3.3 Augus?? 2024)
 
 ### Major changes
 
-None, this is (will be) a maintenance release. 
+- Added a new flag in command line: `-silent`.
+  With that parameter added, pgSimload won't show anymore the welcome message
+  (copyright, program name and version, execution mode...). The user will have
+  to know before hand that the `ESC` will have to be pressed to get out of the
+  execution loop
 
 ### Minor changes
 
@@ -15,6 +19,8 @@ None, this is (will be) a maintenance release.
 - Removed `$` in `$ command <exemples>` so the reader can copy/paste
   the code directly reading the documentation on github. So it is a 
   better user experience
+
+- rebuild of binaries 
 
 ## Version 1.3.2 (July 10th 2024)
 

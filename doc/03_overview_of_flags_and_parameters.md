@@ -5,14 +5,15 @@ documentation, please read next chapter "Reference : parameters and flags".
 
 ## All modes : flags
 
-All flags are optional and intended to run alone.
+All flags are optional and intended to run alone, except `silent`.
 
-| Name      |  Description                         |
-| :---      |    :-----                            |
-| `contact` | Shows author name and email          |
-| `help`    | Shows some help                      |
-| `license` | Shows license                        |
-| `version` | Shows current version of pgSimload   |
+| Name      |  Description                             |
+| :---      |    :-----                                |
+| `contact` | Shows author name and email              |
+| `help`    | Shows some help                          |
+| `license` | Shows license                            |
+| `silent`  | Don't show the start banner of pgSimload |
+| `version` | Shows current version of pgSimload       |
 
 ## SQL-Loop mode : parameters
 
@@ -126,6 +127,16 @@ A full copy of the licence should be present aside the tool, in the main
 directory, in a file named `LICENCE.md`.
 
 This flag is not supposed to be run with other parameters or flags.
+
+### **silent** (flag) [OPTIONAL]
+
+Executing pgSimload in any mode with that `-silent` flag added to the command
+line will remove the welcome banner of pgSimload when you execute it. That
+banner shows the copyright, name and version of the program, the mode you're
+currently using and a reminder to exit the program.
+
+When executing pgSimload in the `-silent` mode, please remember that you can
+exit pgSimload anytime by pressing the `ESC` key.
 
 ### **version** (flag) [OPTIONAL]
 

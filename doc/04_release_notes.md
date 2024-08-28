@@ -1,26 +1,32 @@
 # Release notes
 
-## ACTUAL DEV (Version 1.3.3 Augus?? 2024)
+## Version 1.3.3 (August, 28th 2024)
 
 ### Major changes
 
-- Added a new flag in command line: `-silent`.
+- **Added a new flag in command line: `-silent`**
   With that parameter added, pgSimload won't show anymore the welcome message
-  (copyright, program name and version, execution mode...). The user will have
-  to know before hand that the `ESC` will have to be pressed to get out of the
-  execution loop
+  (copyright, program name and version, execution mode, etc.). 
+  The user will have to remember that the `ESC` key will still have to be
+  pressed to get out of the execution loop
 
 ### Minor changes
 
+- Adding `doc/build_doc.sh`, making it public
+
 - Reviewed the way the documentation is produced with internal 
-  script (not on git). Had to change main.go to have `Version`
+  script (`doc/build_doc.sh`). Had to change `main.go` to have `Version`
   and `Release_date` on separated variables
 
 - Removed `$` in `$ command <exemples>` so the reader can copy/paste
   the code directly reading the documentation on github. So it is a 
   better user experience
 
-- rebuild of binaries 
+- rebuild of binaries with dependencies updates:
+ 
+  - upgraded golang.org/x/crypto v0.25.0 => v0.26.0
+  - upgraded golang.org/x/sys v0.22.0 => v0.24.0
+  - upgraded golang.org/x/text v0.16.0 => v0.17.0
 
 ## Version 1.3.2 (July 10th 2024)
 

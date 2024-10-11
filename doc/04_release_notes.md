@@ -1,5 +1,38 @@
 # Release notes
 
+## Version 1.4.0 (October, 11th 2024)
+
+### Major changes
+
+- **Added a new parameter in command line: `-clients <integer>`** 
+  This parameter is only effective in the "SQL-Loop". It will create as many 
+  connections to the database to execute a given script in parallel, creating 
+  as many PostgreSQL connections as necessary, i.e. the number of clients
+  declared here. There's *no* verification whatsoever of `max_connections` or 
+  any computation of free connections. So if the user specifies too many 
+  connections, an error message will be shown accordingly. If you need many
+  (many) hundreds of concurrent connections, please consider the usage of 
+  a PostgreSQL pooler, like [PgBouncer](https://www.pgbouncer.org/)
+  
+### Minor changes
+
+- Support for Patroni v4 added, it was as simple as add the colorized output
+  in `patronictl` for "Quorum Standby"
+
+- raised the reconnection timeout from 20s to 60s (`pgReconnectTimeout`
+  constant declared in `pgmanager.go`), because in certain scenarios 
+  where there are a lot of `-clients ` used, the server may be in 
+  heavy load enough so 20s isn't sufficient. I'm planning to make
+  this usage parameter rather than a constant, to give control to users
+
+- first usage of the "sync" library in `sqlloop.go`, to manage synchronicity
+  among Go Routines used when the `-clients <integer>` new parameter is used
+
+- rebuild of binaries with dependencies updates:
+ 
+  - upgraded github.com/jackc/pgx/v5 v5.6.0 => v5.7.1
+  - upgraded golang.org/x/crypto v0.26.0 => v0.28.0
+
 ## Version 1.3.3 (August, 28th 2024)
 
 ### Major changes

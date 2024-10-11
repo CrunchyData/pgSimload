@@ -4,7 +4,8 @@
 
 ### Scenario mode
 
-With PGManager tools I can now create the Scenario mode.
+With PGManager tools and the new `-clients <integer>` parameter added in
+1.4.0, the Scenario mode described down there could be done shortly !
 
 It will consist of running [1..n] SQL-Loop(s) at the same time on a server to
 match real world usage scenarios.

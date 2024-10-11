@@ -132,6 +132,15 @@ listed here:
       of the `SQL script` used with `-script`. So it's faster to test
       different values of "sleeping" by recalling the command line and
       changing the value there instead of editing that SQL script...
+ 
+  - the SQL-loop mode execution is by default executed with one unique
+    PostgreSQL connection to the server. You can execute it with as many
+    clients in parallel you want thanks to the `-clients <integer>` parameter
+    added in version 1.4.0. So if you want the same SQL script be executed 
+    by 3 parallel clients, that is simple as adding `-clients 3` to the
+    command line. If you use limitations (`-loops` and/or `-time` and/or
+    `-sleep`) and/or special session parameters (`-session_parameters`), those
+    will be applied to all clients the same way.
 
   - test failovers, or what happens when a DB is down: pgSimLoad handles those
     errors. Give it a try: simply shuting down your PostgreSQL server while it

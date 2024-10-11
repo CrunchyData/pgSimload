@@ -65,8 +65,10 @@ type PatroniConfig struct {
 
 //function to emphase special keywords in the patronictl output
 //coloring them
+//
 // Leader          will be red
 // Replica         will be cyan
+// Quorum Standby  will be cyan
 // Sync Standby    will be green
 // Standby Leader  will be green too
 func patronictloutColorize(input string) string {
@@ -74,17 +76,20 @@ func patronictloutColorize(input string) string {
   m := regexp.MustCompile("Standby Leader")
   n := regexp.MustCompile("Leader")
   o := regexp.MustCompile("Replica")
-  p := regexp.MustCompile("Sync Standby")
+  p := regexp.MustCompile("Quorum Standby")
+  q := regexp.MustCompile("Sync Standby")
 
-  stdby_lead := "${1}"+string(colorRed)   +"Standby Leader" + string(colorReset)+"$2"
-  leader     := "${1}"+string(colorRed)   +"Leader"         + string(colorReset)+"$2"
-  replica    := "${1}"+string(colorCyan)  +"Replica"        + string(colorReset)+"$2"
-  sync_stdby := "${1}"+string(colorGreen) +"Sync Standby"   + string(colorReset)+"$2"
+  stdby_lead   := "${1}"+string(colorRed)   +"Standby Leader" + string(colorReset)+"$2"
+  leader       := "${1}"+string(colorRed)   +"Leader"         + string(colorReset)+"$2"
+  replica      := "${1}"+string(colorCyan)  +"Replica"        + string(colorReset)+"$2"
+  quorum_stdby := "${1}"+string(colorCyan)  +"Quorum Standby" + string(colorReset)+"$2"
+  sync_stdby   := "${1}"+string(colorGreen) +"Sync Standby"   + string(colorReset)+"$2"
  
   output := m.ReplaceAllString(input,  stdby_lead)
   output  = n.ReplaceAllString(output, leader)
   output  = o.ReplaceAllString(output, replica)
-  output  = p.ReplaceAllString(output, sync_stdby)
+  output  = p.ReplaceAllString(output, quorum_stdby)
+  output  = q.ReplaceAllString(output, sync_stdby)
 
   return output
 }

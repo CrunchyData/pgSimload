@@ -12,7 +12,7 @@ import (
 )
 
 const (
-  pgReconnectTimeout = 20 * time.Second
+  pgReconnectTimeout = 60 * time.Second
 )
 
 // PGClientConfig represents the PostgreSQL client configuration
@@ -95,6 +95,8 @@ func (pm *PGManager) PGReconnectWithTimeout(timeout time.Duration, err error) er
           message = "PG server in recovery mode            "
         case "28000", "28P01":
           message = "Invalid auth                          "
+        case "53300":
+           message = "Max connection reached on the server "
         case "57P01":
            message = "PG terminated by admin cmd           "
         case "57P02":

@@ -30,13 +30,14 @@ var (
   configfilename            stringFlag
   createfilename            stringFlag
   scriptfilename            stringFlag
+  exec_clients              int = 1
   exec_loops                int64 = 0
   exec_time                 time.Duration
   sleep_time                time.Duration
   silent_start              bool 
 
-  Version      = "v.1.3.3"
-  Release_date = "August 28th 2024"
+  Version      = "v.1.4.0"
+  Release_date = "October 11th 2024"
 
   License = heredoc.Doc(`
 **The PostgreSQL License**
@@ -141,16 +142,17 @@ func PadLeft(str, pad string, lenght int) string {
 
 
 func init() {
-  flag.Var(&configfilename,        "config",    "JSON config filename")
-  flag.Var(&createfilename,        "create",    "JSON create filename")
-  flag.Var(&scriptfilename,        "script",    "SQL script filename")
+  flag.Var(&configfilename,        "config",     "JSON config filename")
+  flag.Var(&createfilename,        "create",     "JSON create filename")
+  flag.Var(&scriptfilename,        "script",     "SQL script filename")
   flag.Var(&sessiongucsfilename,   "session_parameters", "JSON session gucs filename")
-  flag.Var(&patroniconfigfilename, "patroni",   "JSON Patroni watcher mode config filename")
-  flag.Var(&kubeconfigfilename   , "kube" ,     "JSON Kube watcher mode config filename")
+  flag.Var(&patroniconfigfilename, "patroni",    "JSON Patroni watcher mode config filename")
+  flag.Var(&kubeconfigfilename   , "kube" ,      "JSON Kube watcher mode config filename")
   flag.Var(&gathergucsfilename   , "create_gucs_template", "outputs to that JSON filename") 
-  flag.Int64Var(&exec_loops,       "loops",  0, "number of SQL-Loop to execute") 
-  flag.DurationVar(&exec_time,     "time" ,  0, "duration of SQL-Loop execution")
-  flag.DurationVar(&sleep_time,    "sleep",  0, "sleep duration between iterations in SQL-Loop")
+  flag.IntVar(&exec_clients,       "clients", 1, "number of SQL-Loop to execute concurrently") 
+  flag.Int64Var(&exec_loops,       "loops",   0, "number of SQL-Loop to execute") 
+  flag.DurationVar(&exec_time,     "time" ,   0, "duration of SQL-Loop execution")
+  flag.DurationVar(&sleep_time,    "sleep",   0, "sleep duration between iterations in SQL-Loop")
 }
 
 //function to check flags passed with --flag value

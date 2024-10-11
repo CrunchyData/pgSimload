@@ -19,6 +19,7 @@ All flags are optional and intended to run alone, except `silent`.
 
 | Name           |  Mandatory         | Optional           | Value expected  | Description                                   |
 | :---           |    :-----:         |  :----:            |  :---:          |    :----                                      |
+| `clients`      |                    | **X**              | integer         | Sets the number of parallel runs of the SQL-Loop |
 | `config`       | **X**              |                    | JSON file       | Sets the PG connexion string (any user)       |
 | `create`       |                    | **X**              | JSON file       | Sets the SQL DDL to run once prior main loop  |
 | `script`       | **X**              |                    | SQL text file   | Sets the script to run inside the loop        |
@@ -152,6 +153,56 @@ The `config` flag is not listed down there, but is still **mandatory** to run
 in this mode, please read carefully informations upper in this documentation.
 On this mode, no particular "Username" has to be set in the `config.json`
 file.
+
+### **clients** (Integer) [OPTIONAL]
+
+This parameter has been added in version 1.4.0. 
+
+It allows to specify a number of *parallel executions* of the main SQL-Loop.
+
+There's no verification or calculations whatsoever of available free
+connections (like testing the values of `max_connections`,
+`superuser_reserved_connections`, active connections, etc..). So if you hit a
+limit here in terms of connections, you'll have an error indicating exactly
+that. So that's up to you to put a decent number here... If you need (many)
+hundreds or connections, I strongly encourage you to use a pooler like
+[PgBouncer](https://www.pgbouncer.org/).
+
+If you use limitations (`-loops` and/or `-time` and/or `-sleep`) and/or
+special session parameters (`-session_parameters`), those will be applied to
+all clients the same way.
+
+Note that if you do test also HA with this parameter enabled, the output on
+the console about disconnections, errors, reconnections, etc... Will be
+multiplied by the number of clients you're using.
+
+If you want to track number of pgSimload connections on your database, you
+could use queries like:
+
+```
+select pid, state 
+from pg_stat_activity 
+where application_name = 'pgSimload';
+
+select application_name,count(*) 
+from pg_stat_activity 
+where application_name = 'pgSimload' 
+group by 1;
+```
+
+And you can simulate problems in the database in many ways: stopping the
+PostgreSQL cluster, deleting a PostgreSQL cluster's files (if you're using
+**and testing** HA...), or simply terminating PostgreSQL backends as super
+user like this:
+
+```
+select pg_terminate_backend(pid) 
+from pg_stat_activity 
+where application_name = 'pgSimload';
+```
+
+If you do this, you should see pgSimload attempting to reconnect, and drop
+trying that after 1 minute of failure(s).
 
 ### **create** (JSON text file) [OPTIONAL]
 

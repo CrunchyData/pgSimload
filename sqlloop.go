@@ -8,6 +8,7 @@ import (
   "time"
 	"github.com/eiannone/keyboard"
   "encoding/json"
+  "sync"
 )
 
 var (
@@ -86,7 +87,6 @@ func ExecCreate(pgManager *PGManager) {
     //fmt.Println("DEBUG: SQL Query : " + q.Queries[i].DDL_SQL)
     //fmt.Println("DEBUG: Comment   : " + q.Queries[i].Comment)
 
-    //_, err := connectionInstance.Exec(context.Background(),q.Queries[i].DDL_SQL)
     _, err := pgManager.conn.Exec(context.Background(),q.Queries[i].DDL_SQL)
 
     if err != nil {
@@ -105,7 +105,7 @@ func ExecCreate(pgManager *PGManager) {
   fmt.Println()
 }
 
-func SetSessionParameters(pgManager *PGManager) {
+func SetSessionParameters(pgManager *PGManager, client_id int) {
 
   //user requested to throw special SET TRANSACTIONs parameters
   //before looping on the queries of the SQL Script
@@ -139,7 +139,15 @@ func SetSessionParameters(pgManager *PGManager) {
     exit1("Error reading GUCS parameters file:\n", err)
   }
 
-  fmt.Println("The following Session Parameters are set:")
+  if exec_clients == 1 {
+    fmt.Printf("The following session parameters are applied ")
+
+    if exec_clients > 1 {
+      fmt.Printf("to all %d clients:\n", exec_clients)
+    } else {
+      fmt.Printf(":\n")
+    }
+  }
 
   // we initialize our SessionParameters GUCS parameters  q SessionParameters
   var q SessionParameters
@@ -153,8 +161,14 @@ func SetSessionParameters(pgManager *PGManager) {
   // the name and the value
   for i := 0; i < len(q.SessionParameters); i++ {
     sessiongucs = sessiongucs + "SET " + q.SessionParameters[i].Parameter + " TO '" + q.SessionParameters[i].Value + "';\n"
-    fmt.Println("  ","SET " + q.SessionParameters[i].Parameter + " TO '" + q.SessionParameters[i].Value + "';")
+    if exec_clients == 1 {
+      fmt.Println("  ","SET " + q.SessionParameters[i].Parameter + " TO '" + q.SessionParameters[i].Value + "';")
+    }
   }
+
+  if exec_clients == 1 {
+    fmt.Println()
+  } 
 
   //DEBUG
   //fmt.Println("Session GUCS",sessiongucs)
@@ -162,16 +176,10 @@ func SetSessionParameters(pgManager *PGManager) {
 
   if err != nil {
     exit1("Error while trying to set session parameters as described in -session_parameters " + sessiongucsfilename.value+"\n",err)
-  } else {
-    fmt.Print(string(colorGreen))
-    fmt.Printf("   Session parameters applied to the PG session !\n")
-    fmt.Print(string(colorReset))
-    fmt.Println()
-  }
+  } 
 }
 
-
-func do_sqlloop(pgManager *PGManager) {
+func do_sqlloop() {
 
   // read script.sql
   script_file, err := os.ReadFile(scriptfilename.value)
@@ -184,11 +192,27 @@ func do_sqlloop(pgManager *PGManager) {
 
   //test script once to ensure there's no errors in it
   bad_script := 0
- 
+
+  pgManager, err := NewPGManager(configfilename.value)
+  if err != nil {
+    exit1("Failed to create PGManager:\n", err)
+  }
+
+  // Initial connection
+  conn, err := pgManager.PGConnect()
+  if err != nil {
+    // we won't try to reconnect here since the loop 
+    // did not started yet
+    exit1("Failed to connect to PostgreSQL:\n", err)
+  }
+
+  defer conn.Close(context.Background())
+
   // Exec executes SQL via the PostgreSQL simple query protocol. SQL may contain multiple queries. Execution is
   // implicitly wrapped in a transaction unless a transaction is already in progress or SQL contains transaction control
   // statements. 
   // see https://github.com/jackc/pgx/blob/master/pgconn/pgconn.go#L1047C1-L1049C15
+
   _, err = pgManager.conn.Exec(context.Background(), statements)
 
   if err != nil { 
@@ -200,51 +224,65 @@ func do_sqlloop(pgManager *PGManager) {
     message += "\nPlease correct the errors prior running pgSimload."
     exit1(message,nil)
   } else {
+
+    fmt.Printf("Now entering the main loop\n\n")
   
     if sleep_time > 0 {
-      fmt.Printf("Now entering the main loop, executing script %q each %q\n",scriptfilename.value, sleep_time) 
+      fmt.Printf("Executing script %q each %q\n",scriptfilename.value, sleep_time) 
     } else {
-      fmt.Printf("Now entering the main loop, executing script %q as fast as possible\n",scriptfilename.value) 
+      fmt.Printf("Executing script %q as fast as possible\n",scriptfilename.value) 
     }
 
     if exec_loops !=0 || exec_time !=0 {
       fmt.Printf("\nNumber of loops will be limited:\n")
 
       if exec_loops != 0 {
-        fmt.Printf("    %d executions", exec_loops) 
+        fmt.Printf("  %d executions", exec_loops) 
       } 
 
       if exec_time != 0 {
         if exec_loops !=0 {
-          fmt.Printf(" or\n    %q maximum duration\n", exec_time)
-          fmt.Printf("Whichever happens first\n")
+          fmt.Printf(" or\n  %q maximum duration\n", exec_time)
+          fmt.Printf("  (whichever happens first)\n")
         } else {
-          fmt.Printf("    %q maximum duration\n", exec_time)
+          fmt.Printf("  %q maximum duration\n", exec_time)
         }
       } else {
         fmt.Println()
       } 
     }
+
+    if exec_clients != 1 {
+      fmt.Printf("\nExecuting the loop with %d concurrent clients\n\n", exec_clients)
+    }
+
   }
+
+  conn.Close(context.Background())
 
   //store Time when we started the loop
   total_start_time = time.Now()
 
+  var wg sync.WaitGroup
+
   // MAIN loop on SQL content of script.sql
 	// This is to be able to stop the loop on <Esc> key
-	stopCh := make(chan bool)
+  stopCh    := make(chan bool)
+	
 	go func() {
 
-		for {
-			_, key, err := keyboard.GetKey()
+	  for {
+		  _, key, err := keyboard.GetKey()
 			if err != nil {
 				//exit1("Error:\n",err)
-			}
+		  }
 			if key == keyboard.KeyEsc {
-				stopCh <- true
-			}
-		}
-	}()
+        for i=1; i < exec_clients+1; i++ {
+				  stopCh <- true
+        }
+		  }
+	  }
+  }()
 
   //if user has set a --time "duration" parameter we start a "timer"
   //of that amount of time. This one will send "true" to stopCh once 
@@ -253,72 +291,111 @@ func do_sqlloop(pgManager *PGManager) {
   go func() {
     if exec_time != 0 {
       time.Sleep(exec_time)
-      stopCh <- true
+      for i=1; i < exec_clients+1; i++ {
+			  stopCh <- true
+      }
     }    
   }()
 
-loop:
-	for {
-		select {
-		case stop := <-stopCh:
-			if stop {
-				break loop
-			}
-		default:
 
-      _, err := pgManager.conn.Exec(context.Background(), statements)
+  // spawn as many clients as the user wants
+  for i=1; i < exec_clients+1; i++ { 
+    //DEBUG
+    //fmt.Printf("DEBUG: Spawn do_sqlloop(%d)\n", i)
+    wg.Add(1)
 
-      if err != nil { 
-        //the last execution of the script is in error
+    go func(client_id int) {
+  
+      defer wg.Done()
 
-        //if we were not in error until now,
-        //we set the current time as the start 
-        //time of errors
-        if err_start_time.IsZero() {
-          err_start_time = time.Now()
-        }
+      pgManager, err := NewPGManager(configfilename.value)
+      if err != nil {
+        exit1("Failed to create PGManager:\n", err)
+      }
 
-        errors_count += 1 
+      // Initial connection
+      conn, err := pgManager.PGConnect()
+      if err != nil {
+        // we won't try to reconnect here since the loop 
+        // did not started yet
+        exit1("\nFailed to connect to PostgreSQL:\n", err)
+      }
 
-        //we may have been connected ? Let's ping the server
-        //if we don't have an answer, try to reconnect instead
+      if sessiongucsfilename.set {
+        SetSessionParameters(pgManager, client_id)
+      }
 
-        //test connection
-        //err := pgManager.conn.Ping(context.Background())
-        err = pgManager.conn.Ping(context.Background())
-        if err != nil {
-          err := pgManager.PGReconnectWithTimeout(pgReconnectTimeout,err)
-          if err != nil {
-            exit1("\nUnable to reconnect to PostgreSQL:\n", err)
+      defer conn.Close(context.Background())
+
+    loop:
+     	for {
+		    select {
+		    case stop := <-stopCh:
+			    if stop {
+				    break loop
+            return
+			     }
+
+		    default:
+
+          _, err := pgManager.conn.Exec(context.Background(), statements)
+
+          if err != nil { 
+            //the last execution of the script is in error
+
+            //if we were not in error until now,
+            //we set the current time as the start 
+            //time of errors
+            if err_start_time.IsZero() {
+              err_start_time = time.Now()
+            }
+
+            errors_count += 1 
+
+            //we may have been connected ? Let's ping the server
+            //if we don't have an answer, try to reconnect instead
+
+            //test connection
+            //err := pgManager.conn.Ping(context.Background())
+            err = pgManager.conn.Ping(context.Background())
+            if err != nil {
+              err := pgManager.PGReconnectWithTimeout(pgReconnectTimeout,err)
+              if err != nil {
+                stopCh <- true
+                exit1("\nUnable to reconnect to PostgreSQL:\n", err)
+              }
+            }
+          } else {
+
+            //the last execution of the script is OK
+
+            if ! err_start_time.IsZero() {
+              total_downtime += time.Since(err_start_time)
+              err_start_time = time.Time{}
+            } else {
+              success_count += 1
+            }
+ 
+            fmt.Print(string(colorGreen))
+            fmt.Printf(ClearLine);
+            fmt.Printf("\rScript executions succeeded : %10d ", success_count)
+            fmt.Print(string(colorReset)) 
+
+            if success_count == exec_loops {
+              break loop;
+              stopCh <- true
+            }
+
+            if sleep_time > 0 {
+              time.Sleep(sleep_time)
+            } 
           }
         }
-      } else {
+      }    // loop: for {...}
+    }(i)   // go func(client_id int){...}(i)
+  }        // for i=1; i < exec_clients+1; i++ {
 
-        //the last execution of the script is OK
-
-        if ! err_start_time.IsZero() {
-          total_downtime += time.Since(err_start_time)
-          err_start_time = time.Time{}
-        } else {
-          success_count += 1
-        }
- 
-        fmt.Print(string(colorGreen))
-        fmt.Printf(ClearLine);
-        fmt.Printf("\rScript executions succeeded : %10d                               ", success_count)
-        fmt.Print(string(colorReset)) 
-
-        if success_count == exec_loops {
-          break loop;
-        }
-
-        if sleep_time > 0 {
-          time.Sleep(sleep_time)
-        } 
-
-      }
-    }
-  }
+  wg.Wait() // Wait for all goroutines to finish
 
   // end of the main SQL Loop, time to compute times, etc..
   // and print the summary before exiting
@@ -381,6 +458,7 @@ loop:
 
 }
 
+
 func SQLLoop () {
 
   // PG connex needed
@@ -405,7 +483,7 @@ func SQLLoop () {
     exit1("Failed to connect to PostgreSQL:\n", err)
   }
 
-  defer conn.Close(context.Background())
+  //defer conn.Close(context.Background())
 
   //fmt.Println("DEBUG: Connected to PG!")
 
@@ -418,18 +496,16 @@ func SQLLoop () {
   fmt.Println("+ SQL-Loop at", currentTime.Format("2006.01.02 15:04:05"))
   fmt.Println()
 
-  if sessiongucsfilename.set {
-    SetSessionParameters(pgManager)
-  }
-
   if createfilename.set {
     //user requested to execure a SQL DML/DDL script
     //before looping on the queries of the SQL script 
     //so we do exec it
     ExecCreate(pgManager)
   }
-  
-  do_sqlloop(pgManager)
+
+  conn.Close(context.Background())
+ 
+  do_sqlloop()
 
 }
 

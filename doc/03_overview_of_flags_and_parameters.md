@@ -27,6 +27,7 @@ All flags are optional and intended to run alone, except `silent`.
 | `loops`        |                    | **X**              | integer         | Sets the number of loops to execute before exiting  |
 | `time`         |                    | **X**              | duration        | Sets the total execution time before exiting |
 | `sleep`        |                    | **X**              | duration        | Sets a sleep duration between 2 iterations of the SQL-Loop |
+| `rsleep`       |                    | **X**              | duration        | Sets a maximum random sleep duration between 2 iterations of the SQL-Loop |
 
 ## Kube-Watcher mode : parameters
 
@@ -403,6 +404,31 @@ on the total desired execution time, as an example:
     3rd execution at 8s, the pause will last 4s, leading to 12s overall... 
 
 Just bare that in mind when creating your tests use cases, etc.
+
+### **rsleep** (duration) [OPTIONAL]
+
+This parameter was added in version 1.4.1.
+
+It allows the user to actually throttle down the execution in SQL-Loop mode,
+exactly like `sleep` does.
+
+A pause will be added between each iteration of the execution of the SQL
+script, and the duration of that pause will bet somewhere 0 and that **maximum
+sleep duration**, defined randomly by the program.
+
+That duration is expressed the very same way the `time` parameter is (see
+previous paragraphs). 
+
+Note that when `sleep` and `rsleep` are used together, the total sleep time
+between iterations will be the sum of both, one being a fixed duration
+(`sleep`) and the other a random duration (`rsleep`).
+
+This parameter is usefull if you're using pgSimload in SQL-Loop mode with more
+than one unique `-client` (feature added in 1.4.0), since each of the clients
+won't then be fired at the very same moment, if you use `-sleep` only. You can
+mix then `-clients` with `-rsleep` (and/or with `-sleep` too) and/or `-time`,
+and/or `-loops`, etc. This brings a lot of versatility to pgSimload SQL-Loop
+mode, since it can be used in very different manners.
 
 ## Kube-Watcher mode flag and parameters
 

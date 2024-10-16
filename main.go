@@ -34,10 +34,11 @@ var (
   exec_loops                int64 = 0
   exec_time                 time.Duration
   sleep_time                time.Duration
+  rsleep_time               time.Duration
   silent_start              bool 
 
-  Version      = "v.1.4.0"
-  Release_date = "October 11th 2024"
+  Version      = "v.1.4.1"
+  Release_date = "October 16th 2024"
 
   License = heredoc.Doc(`
 **The PostgreSQL License**
@@ -153,6 +154,8 @@ func init() {
   flag.Int64Var(&exec_loops,       "loops",   0, "number of SQL-Loop to execute") 
   flag.DurationVar(&exec_time,     "time" ,   0, "duration of SQL-Loop execution")
   flag.DurationVar(&sleep_time,    "sleep",   0, "sleep duration between iterations in SQL-Loop")
+  flag.DurationVar(&rsleep_time,   "rsleep",  0, "maximum random sleep duration between iterations in SQL-Loop")
+
 }
 
 //function to check flags passed with --flag value
@@ -239,6 +242,7 @@ func CheckFlags () {
     }
 
   }
+
 }
 
 func start_banner (mode string) {

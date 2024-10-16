@@ -39,6 +39,20 @@ this:
 pgSimload -config config.json -script script.sql -sleep 1s500ms
 ```
 
+You can also throtle it down with a *random* duration somewhere between 0s and
+2s using `-rsleep` like this:
+
+```code
+pgSimload -config config.json -script script.sql -rsleep 2s
+```
+
+And you can mix `-sleep` with `-rsleep` to have a sleep between 2 durations
+somewhere between 1s and 2s (1s fixed + 0~1s random) like this:
+
+```
+pgSimload -config config.json -script script.sql -sleep 1s -rsleep 1s
+```
+
 If you want to limit the number of loops, you can do that as simply as
 
 ```code
@@ -57,6 +71,23 @@ break the SQL-Loop:
 pgSimload -config config.json -script script.sql -time 1s -loops 20
 pgSimload -config config.json -script script.sql -time 10s -loops 20
 ```
+
+And finaly, you could use all those parameters at the same time: 
+
+```code
+pgSimload -config config.json -script script.sql -time 10s -loops 20 -sleep 1s -rsleep 1s -loops 10
+```
+
+This translate to something like: 
+
+*"Hey pgSimload, please execute the SQL in script.SQL to the PostgreSQL
+connection detailed in config.json. Do it for a maximum of 10 seconds and/or
+20 loops (iterations). Between each of those loops, please wait at least 1
+second and a maximum of 2 seconds".*
+
+pgSimload SQL-Loop *is* versatile and highly configurable, that's the main
+point of the tool I wanted to write :-)
+
 
 ## `examples/SQL-Loop/PG_15_Merge_command/`
 

@@ -1,5 +1,27 @@
 # Release notes
 
+## Version 1.4.1 (October, 16th 2024)
+
+### Major changes
+
+- **Added a new parameter in command line: `-rsleep time.Duration`**
+  Like `-sleep`, this parameter will add a sleep time between 2 iterations 
+  (executions) of the `-script script.sql` (or whatever it's name).
+
+  The difference is that the actual sleep time will be a random duration
+  between 0 and that parameter. This is usefull when there are multiple 
+  `-clients` running, so they don't fire each at the same exact time... 
+  Or when one wants to execution to be just random.
+
+  If used aside `-sleep time.Duration`, then the total sleep time between
+  two iterations will be sum of both, one being a fixed duration and the other
+  being a random one.
+
+### Minor changes
+
+- review of **examples** in the documentation, since many features have been
+  added those last months, and the examples pages weren't updated accordingly.
+
 ## Version 1.4.0 (October, 11th 2024)
 
 ### Major changes

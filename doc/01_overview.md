@@ -132,6 +132,16 @@ listed here:
       of the `SQL script` used with `-script`. So it's faster to test
       different values of "sleeping" by recalling the command line and
       changing the value there instead of editing that SQL script...
+
+    - since version 1.4.1, the parameter `-rsleep duration` allows to set 
+      a maximum random sleep time of the duration in parameter. This is 
+      usefull if you want not all your `-clients <integer>` to be executing
+      the `-script` at the exact same time. OR if you prefer the *sleep time* 
+      between iterations to be somewhat random and not fixed. 
+      If `-sleep` and `-rsleep` are used *both*, then the random sleep time
+      will be *added* to the fixed sleep time. As an example a `-sleep 1s`
+      with a `-rsleep 1s` will result of a total sleep time *between* 1 and
+      2 seconds.
  
   - the SQL-loop mode execution is by default executed with one unique
     PostgreSQL connection to the server. You can execute it with as many

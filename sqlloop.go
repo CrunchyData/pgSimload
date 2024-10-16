@@ -9,6 +9,7 @@ import (
 	"github.com/eiannone/keyboard"
   "encoding/json"
   "sync"
+  "math/rand"
 )
 
 var (
@@ -226,18 +227,27 @@ func do_sqlloop() {
   } else {
 
     fmt.Printf("Now entering the main loop\n\n")
+
+    fmt.Println("Executing script %q", scriptfilename.value)
   
-    if sleep_time > 0 {
-      fmt.Printf("Executing script %q each %q\n",scriptfilename.value, sleep_time) 
+    if (sleep_time > 0 && rsleep_time >0) {
+      fmt.Printf("each %q ", sleep_time) 
+      fmt.Printf("plus a an added random time of maximum %q\n",rsleep_time)
+    } else if sleep_time > 0 {
+      fmt.Printf("each %q\n", sleep_time)
+    } else if rsleep_time > 0 {
+      fmt.Printf("with a maximum random sleep time of %q between iterations\n", rsleep_time)
     } else {
-      fmt.Printf("Executing script %q as fast as possible\n",scriptfilename.value) 
+      fmt.Printf("as fast as possible\n")
     }
+    
+    fmt.Println()
 
     if exec_loops !=0 || exec_time !=0 {
-      fmt.Printf("\nNumber of loops will be limited:\n")
+      fmt.Println("Number of loops will be limited:")
 
       if exec_loops != 0 {
-        fmt.Printf("  %d executions", exec_loops) 
+        fmt.Printf("  %d executions\n", exec_loops) 
       } 
 
       if exec_time != 0 {
@@ -247,9 +257,9 @@ func do_sqlloop() {
         } else {
           fmt.Printf("  %q maximum duration\n", exec_time)
         }
-      } else {
-        fmt.Println()
       } 
+
+      fmt.Println()
     }
 
     if exec_clients != 1 {
@@ -389,6 +399,18 @@ func do_sqlloop() {
             if sleep_time > 0 {
               time.Sleep(sleep_time)
             } 
+
+            if rsleep_time > 0 {
+
+              // seed the random number gen
+	            rand.Seed(time.Now().UnixNano())
+  
+              //gen a random duration between 0 and rsleep_time
+              random_sleep_duration := time.Duration(rand.Int63n(int64(rsleep_time)))
+
+              time.Sleep(random_sleep_duration)
+            } 
+
           }
         }
       }    // loop: for {...}

@@ -228,7 +228,7 @@ func do_sqlloop() {
 
     fmt.Printf("Now entering the main loop\n\n")
 
-    fmt.Println("Executing script %q", scriptfilename.value)
+    fmt.Println("Executing script", scriptfilename.value)
   
     if (sleep_time > 0 && rsleep_time >0) {
       fmt.Printf("each %q ", sleep_time) 

@@ -10,6 +10,8 @@ echo " go mod tidy"
 echo "----------------------------------------------------------------------"
 go mod tidy
 
+mkdir -p bin/
+
 rm bin/pgSimload*
 echo "----------------------------------------------------------------------"
 echo "Building binaries"

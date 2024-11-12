@@ -1,5 +1,26 @@
 # Release notes
 
+## Version 1.4.2 (November, 12nd 2024)
+
+### Major changes
+
+- **none** this is mostly a monthly build, to refresh dependencies'versions
+
+### Minor changes
+
+- fixed a small typo in a `sqlloop.go` output
+
+- removed `bin/` 
+  - to lighten sources! 
+  - binaries will be provided only within [the releases](https://github.com/CrunchyData/pgSimload/releases) starting from
+today
+  - reviewed a bit documentation to act that change
+
+- rebuild of binaries with dependencies updates:
+  - upgraded golang.org/x/crypto v0.28.0 => v0.29.0
+  - upgraded golang.org/x/sys v0.26.0 => v0.27.0
+  - upgraded golang.org/x/text v0.19.0 => v0.20.0
+
 ## Version 1.4.1 (October, 16th 2024)
 
 ### Major changes

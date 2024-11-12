@@ -35,7 +35,9 @@ go run . -h
 ## Using binaries provided
 
 If you don't have Go installed on your system, you can also just use one of
-the binaries provided in [bin/](https://github.com/CrunchyData/pgSimload/tree/master/bin). 
+the binaries provided in [the lastest
+release](https://github.com/CrunchyData/pgSimload/releases/latest). I really
+recommend you download the **latest** release!
 
 If you want to build your own binary you can build it too, as described in the
 next paragraph.
@@ -55,7 +57,9 @@ sh build.sh
 
 We've started tests to build those packages but at the moment, the work hasn't
 finish yet. But do you really need this, since pgSimload is a standalone
-binary ?
+binary ? Feel free to contribute to pgSimload, opening a [Pull
+request](https://github.com/CrunchyData/pgSimload/pulls), with your packaging
+code ;-)
 
 # Usages
 

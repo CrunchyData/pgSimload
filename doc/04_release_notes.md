@@ -1,5 +1,18 @@
 # Release notes
 
+## Version 1.4.3 (December, 16th 2024)
+
+### Major changes
+
+- **none** this is mostly a monthly build, to refresh dependencies'versions
+
+### Minor changes
+
+- rebuild of binaries with dependencies updates:
+  - upgraded golang.org/x/crypto v0.29.0 => v0.31.0
+  - upgraded golang.org/x/sys v0.27.0 => v0.28.0
+  - upgraded golang.org/x/text v0.20.0 => v0.21.0
+
 ## Version 1.4.2 (November, 12nd 2024)
 
 ### Major changes

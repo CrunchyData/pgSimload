@@ -43,7 +43,7 @@ var (
   License = heredoc.Doc(`
 **The PostgreSQL License**
 
-Copyright (c) 2022-2024, Crunchy Data Solutions, Inc.
+Copyright (c) 2022-2025, Crunchy Data Solutions, Inc.
 
 Permission to use, copy, modify, and distribute this software and its
 documentation for any purpose, without fee, and without a written agreement is
@@ -64,7 +64,7 @@ SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 For any question reach programmer at jean-paul.argudo@crunchydata.com.`)
 
-  License_short_notice = heredoc.Doc(`Copyright (c) 2022-2023, Crunchy Data Solutions, Inc.
+  License_short_notice = heredoc.Doc(`Copyright (c) 2022-2025, Crunchy Data Solutions, Inc.
   This program is licensied under The PostgreSQL License. You have a copy
   of the full license aside the source code in the file named LICENSE.md.`)
 

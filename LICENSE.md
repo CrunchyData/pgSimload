@@ -1,7 +1,7 @@
 The PostgreSQL License
 ===============================================================================
 
-Copyright (c) 2022-2024, Crunchy Data Solutions, Inc.
+Copyright (c) 2022-2025, Crunchy Data Solutions, Inc.
 
 Permission to use, copy, modify, and distribute this software and its
 documentation for any purpose, without fee, and without a written agreement

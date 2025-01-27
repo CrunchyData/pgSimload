@@ -217,11 +217,22 @@ func Replication_info(user_gucs string, pgManager *PGManager) {
   if row_count > 0 {
     output += "+----------------------------------+--------------------+-------+----------------------------------+\n"
     fmt.Println(output)
-  } else { 
-      fmt.Print(string(colorRed))
-      fmt.Printf("\nPostgreSQL not responding... Probable failover in progress ?...\n")
-      fmt.Print(string(colorReset))
-  }
+  } /*else...  
+
+      We don't show anything.
+  
+      Because the query was sent and the result is empty. So that means it did
+      worked and then:
+
+        - it will show Replica(s) information ASAP the failover is done, and
+          it's useless to put it again here, because it can be seen in the 
+          patronictl output.... 
+
+        - also there's a corner case with an unique instance, even with
+          Patroni. If it's a stand alone, the pg_stat_replication is always
+          empty because there's *no* replication...
+      
+  */
 
   rows.Close()
 

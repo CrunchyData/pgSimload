@@ -1,5 +1,23 @@
 # Release notes
 
+## Version 1.4.4 (January, 27th 2025)
+
+### Major changes
+
+- **none** this is mostly a monthly build, to refresh dependencies'versions
+
+### Minor changes
+
+- corrected a buggy output in Patroni Watched mode when it is monitoring
+  a *stand alone* instance
+
+- updated Crunchy copyright ranges to include 2025 (patch by @youattd)
+
+- rebuild of binaries with dependencies updates:
+  - upgraded github.com/jackc/pgx/v5 to v5.7.2
+  - upgraded golang.org/x/crypto     to v0.32.0
+  - upgraded golang.org/x/sys        to v0.29.0
+
 ## Version 1.4.3 (December, 16th 2024)
 
 ### Major changes
@@ -9,9 +27,9 @@
 ### Minor changes
 
 - rebuild of binaries with dependencies updates:
-  - upgraded golang.org/x/crypto v0.29.0 => v0.31.0
-  - upgraded golang.org/x/sys v0.27.0 => v0.28.0
-  - upgraded golang.org/x/text v0.20.0 => v0.21.0
+  - upgraded golang.org/x/crypto to v0.31.0
+  - upgraded golang.org/x/sys    to v0.28.0
+  - upgraded golang.org/x/text   to v0.21.0
 
 ## Version 1.4.2 (November, 12nd 2024)
 
@@ -30,9 +48,9 @@ today
   - reviewed a bit documentation to act that change
 
 - rebuild of binaries with dependencies updates:
-  - upgraded golang.org/x/crypto v0.28.0 => v0.29.0
-  - upgraded golang.org/x/sys v0.26.0 => v0.27.0
-  - upgraded golang.org/x/text v0.19.0 => v0.20.0
+  - upgraded golang.org/x/crypto to v0.29.0
+  - upgraded golang.org/x/sys    to v0.27.0
+  - upgraded golang.org/x/text   to v0.20.0
 
 ## Version 1.4.1 (October, 16th 2024)
 
@@ -113,9 +131,9 @@ today
 
 - rebuild of binaries with dependencies updates:
  
-  - upgraded golang.org/x/crypto v0.25.0 => v0.26.0
-  - upgraded golang.org/x/sys v0.22.0 => v0.24.0
-  - upgraded golang.org/x/text v0.16.0 => v0.17.0
+  - upgraded golang.org/x/crypto to v0.26.0
+  - upgraded golang.org/x/sys    to v0.24.0
+  - upgraded golang.org/x/text   to v0.17.0
 
 ## Version 1.3.2 (July 10th 2024)
 
@@ -141,9 +159,8 @@ None, this is a maintenance release.
 
 - re-Build of binaries to update underlying dependencies:
  
-  - upgraded golang.org/x/crypto v0.24.0 => v0.25.0
-
-  - upgraded golang.org/x/sys v0.21.0 => v0.22.0
+  - upgraded golang.org/x/crypto to v0.25.0
+  - upgraded golang.org/x/sys    to v0.22.0
 
 ## Version 1.3.1 (June 18th 2024)
 

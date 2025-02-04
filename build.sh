@@ -1,5 +1,7 @@
 #!/bin/bash
 
+version=$(grep Version main.go  | head -1 | sed 's/^\(.*\)"\(.*\)".*/\2/')
+
 echo "----------------------------------------------------------------------"
 echo " go get -u"
 echo "----------------------------------------------------------------------"
@@ -17,17 +19,15 @@ echo "----------------------------------------------------------------------"
 echo "Building binaries"
 echo "----------------------------------------------------------------------"
 echo "Building windows version, stripped executable (in bin/pgSimload_win.exe)"
-GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -o bin/pgSimload_win.exe .
+GOOS=windows GOARCH=amd64 GOAMD64=v2 go build -trimpath -buildmode=pie -ldflags "-s -w -X 'main.Version=${version}'" -o bin/pgSimload_win.exe .
 echo "Building mac (darwin) version, stripped executable (in bin/pgSimload_mac)"
-GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w" -o bin/pgSimload_mac .
+GOOS=darwin GOARCH=amd64 GOAMD64=v2 go build -trimpath -buildmode=pie -ldflags "-s -w -X 'main.Version=${version}'" -o bin/pgSimload_mac .
 echo "Building linux (amd64) version, stripped executable, not static (in bin/pgSimload)"
-GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o bin/pgSimload .
+GOOS=linux GOARCH=amd64 GOAMD64=v2 go build -trimpath -buildmode=pie -ldflags "-s -w -X 'main.Version=${version}'" -o bin/pgSimload .
 echo "Building linux (amd64) version, stripped executable, static (in bin/pgSimload_static)"
-GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/pgSimload_static .
-
-#  --ldflags '-linkmode external -extldflags "-static"' 
-
-
+GOOS=linux GOARCH=amd64 GOAMD64=v2 CGO_ENABLED=0 go build -trimpath -buildmode=pie -ldflags "-s -w -X 'main.Version=${version}'" -o bin/pgSimload_static .
+echo "Building linux (amd64) version, UNSTRIPPED executable, static (in bin/pgSimload_static_non_stripped)"
+GOOS=linux GOARCH=amd64 GOAMD64=v2 CGO_ENABLED=0 go build -trimpath -buildmode=pie -ldflags "-s -X 'main.Version=${version}'" -o bin/pgSimload_static_non_stripped .
 
 
 echo "----------------------------------------------------------------------"

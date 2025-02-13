@@ -1,5 +1,34 @@
 # Release notes
 
+## Version 1.4.5 (February, 13th 2025)
+
+### Major changes
+
+- **none** this is mostly a monthly build, to refresh dependencies'versions
+
+### Minor changes
+
+- corrected a bug where `-loops <number>` could be ignored when multiple
+  clients were spawned with `-clients <number>`
+
+- added a bit more info in the "SQL-Loop mode", showing number of scripts
+  execution "per client" in parenthesis after the total number of "Script
+  executions succeeded:"
+
+- Thanks to Dimitri John Ledkov (@xnox) for his talk at FOSDEM 2025, 
+  `build.sh` creates better compilated binaries:
+  - added GOAMD64=v2
+  - added trimpath
+  - added buildmode=pie
+  - added -X 'main.Version=..'
+
+- Added compilation for a non stripped version of the binary
+
+- rebuild of binaries with dependencies updates:
+  - upgraded golang.org/x/crypto to v0.33.0
+  - upgraded golang.org/x/sys    to v0.30.0
+  - upgraded golang.org/x/text   to v0.22.0
+
 ## Version 1.4.4 (January, 27th 2025)
 
 ### Major changes

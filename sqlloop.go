@@ -388,10 +388,15 @@ func do_sqlloop() {
  
             fmt.Print(string(colorGreen))
             fmt.Printf(ClearLine);
-            fmt.Printf("\rScript executions succeeded : %10d ", success_count)
+
+            if exec_clients != 1 {
+               fmt.Printf("\rScript executions succeeded : %10d (%d per client)", success_count, success_count/int64(exec_clients))
+            } else {
+               fmt.Printf("\rScript executions succeeded : %10d ", success_count)
+            }
             fmt.Print(string(colorReset)) 
 
-            if success_count == exec_loops {
+            if (exec_loops !=0) && (success_count >= exec_loops) {
               break loop;
               stopCh <- true
             }

@@ -140,11 +140,11 @@ func SetSessionParameters(pgManager *PGManager, client_id int) {
     exit1("Error reading GUCS parameters file:\n", err)
   }
 
-  if exec_clients == 1 {
-    fmt.Printf("The following session parameters are applied ")
+  if client_id == 1 {
+    fmt.Printf("The following session parameters are applied")
 
     if exec_clients > 1 {
-      fmt.Printf("to all %d clients:\n", exec_clients)
+      fmt.Printf(" to all %d clients:\n", exec_clients)
     } else {
       fmt.Printf(":\n")
     }
@@ -162,12 +162,12 @@ func SetSessionParameters(pgManager *PGManager, client_id int) {
   // the name and the value
   for i := 0; i < len(q.SessionParameters); i++ {
     sessiongucs = sessiongucs + "SET " + q.SessionParameters[i].Parameter + " TO '" + q.SessionParameters[i].Value + "';\n"
-    if exec_clients == 1 {
+    if client_id == 1 {
       fmt.Println("  ","SET " + q.SessionParameters[i].Parameter + " TO '" + q.SessionParameters[i].Value + "';")
     }
   }
 
-  if exec_clients == 1 {
+  if client_id == 1 {
     fmt.Println()
   } 
 

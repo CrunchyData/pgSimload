@@ -1,5 +1,19 @@
 # Release notes
 
+## Version 1.4.6 (April, 7th 2025)
+
+### Major changes
+
+- **none** this is mostly a monthly build, to refresh dependencies'versions
+
+### Minor changes
+
+- rebuild of binaries with dependencies updates:
+  - upgraded golang.org/x/crypto     to v0.37.0
+  - upgraded golang.org/x/sys        to v0.32.0
+  - upgraded golang.org/x/text       to v0.24.0
+  - upgraded github.com/jackc/pgx/v5 to v5.7.4
+
 ## Version 1.4.5 (February, 13th 2025)
 
 ### Major changes

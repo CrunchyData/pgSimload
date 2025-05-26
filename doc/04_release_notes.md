@@ -8,7 +8,7 @@
 
 ### Minor changes
 
-- built with Go 1.23
+- built with Go 1.24.3
 
 - rebuild of binaries with dependencies upgrades:
   - toolchain => go1.24.3

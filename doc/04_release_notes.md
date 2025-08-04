@@ -1,10 +1,25 @@
 # Release notes
 
+## Version 1.4.7 (August, 4th 2025)
+
+### Major changes
+
+- **none** this is a monthly build, to refresh dependencies'versions
+
+### Minor changes
+
+- built with Go 1.24.5
+
+- rebuild of binaries with dependencies upgrades:
+  - golang.org/x/crypto => v0.40.0
+  - golang.org/x/sys => v0.34.0
+  - golang.org/x/text => v0.27.0
+
 ## Version 1.4.7 (May, 26th 2025)
 
 ### Major changes
 
-- **none** this is mostly a monthly build, to refresh dependencies'versions
+- **none** this is a monthly build, to refresh dependencies'versions
 
 ### Minor changes
 
@@ -21,7 +36,7 @@
 
 ### Major changes
 
-- **none** this is mostly a monthly build, to refresh dependencies'versions
+- **none** this is a monthly build, to refresh dependencies'versions
 
 ### Minor changes
 
